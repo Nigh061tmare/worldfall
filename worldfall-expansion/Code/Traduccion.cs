@@ -23,6 +23,9 @@ namespace WorldfallExpansion
     internal static class Traduccion
     {
         public static readonly Traductor T = new Traductor();
+        static readonly object cerrojo = new object();
+        // true mientras el propio plugin pinta (la brujula ya esta en espanol: ni traducir ni registrar).
+        public static bool Saltar;
         static bool activo;
         static float tFlush;
         static string rutaFaltan = "";
@@ -86,8 +89,8 @@ namespace WorldfallExpansion
 
         static string Seguro(string s)
         {
-            if (string.IsNullOrEmpty(s)) return s;
-            try { return T.Traduce(s); }
+            if (string.IsNullOrEmpty(s) || Saltar) return s;
+            try { lock (cerrojo) return T.Traduce(s); }
             catch (Exception e) { Estado.Fallo("traducir", e); return s; }
         }
 
@@ -100,7 +103,8 @@ namespace WorldfallExpansion
             tFlush = real;
             try
             {
-                var l = T.SacaFaltan();
+                List<string> l;
+                lock (cerrojo) l = T.SacaFaltan();
                 if (l.Count == 0) return;
                 var sb = new StringBuilder();
                 foreach (string s in l) sb.Append(Traductor.Escapa(s)).Append(" => \n");

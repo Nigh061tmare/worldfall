@@ -60,7 +60,7 @@ Estas firmas **existen** y las usan Worldsmith/PowerBox/Kimetsu/AVB:
 actor.isAlive(); actor.isSapient(); actor.isAdult(); actor.isKing();
 actor.getName(); actor.data.id;            // id numérico
 actor.hasLover(); actor.lover;             // pareja
-actor.getChildren(false);                  // hijos vivos (IEnumerable<Actor>)
+actor.getChildren(false);                  // hijos (IEnumerable<Actor>; el bool es pOnlyCurrentFamily: filtra vivos tu)
 actor.hasFamily();                         // ¿tiene familia?
 actor.city; actor.kingdom;                 // contexto
 actor.setCity(null);                       // destierro (Nivel 3)
@@ -70,13 +70,43 @@ city.leader; city.removeLeader();          // liderazgo
 // Mundo
 World.world.units.getSimpleList();         // todas las unidades
 World.world.getCurWorldTime();             // tiempo de mundo (segundos)
-World.world.map_stats.name / id            // identificador de mundo (por partida)
+World.world.map_stats.name / id            // OJO: map_stats es INTERNAL -> solo por Traverse (como PeceraWB)
 WorldTip.showNow(texto, false, "top", s);  // aviso en pantalla
 
 // Reino/guerra
 kingdom.data.name; kingdom.wild; kingdom.king;
 DiplomacyManager.startWar(atq, def);       // declarar guerra (parcheable)
 ```
+
+### 4.1 Verificado en el binario (Assembly-CSharp build 719, hash 51D275F0…)
+
+Leído del juego descompilado. Cuenta como verificado aunque ningún otro mod lo use:
+
+```csharp
+// BaseSimObject (padre de Actor)
+public WorldTile current_tile;  public Vector2 current_position;   // posicion en casillas
+public Kingdom kingdom;
+// Actor
+public int getAge(); public bool isCityLeader(); public UnitProfession getProfession();
+public bool hasTrait(string id); public bool addTrait(string id, bool pRemoveOpposites = false);
+public void addRenown(int pValue); public int renown / money / level / loot { get; }
+public IEnumerable<Actor> getChildren(bool pOnlyCurrentFamily = true);
+// Mundo
+public static class World { public static MapBox world; }   // MapBox: units, getCurWorldTime()
+internal MapStats map_stats;                                 // ¡internal!
+public static void WorldTip.showNow(string pText, bool pTranslate = true, string pPosition = "center", float pTime = 3f, string pColor = "#F3961F");
+// NeoModLoader
+BasicMod<T>.Instance; GetDeclaration().FolderPath; public virtual void Init()   // ¡no ocultar Init!
+```
+
+### 4.2 API pública de Worldfall 0.9.2 (solo lectura, por reflexión)
+
+```csharp
+FirstPerson.WorldBoxMod.Instance   // public static
+  .IsFirstPerson (bool)  .Host (Actor)  .ViewYaw (float, radianes; delante = (cos, sin))
+```
+Todo lo demás de Worldfall es `internal`: no se toca. Sus textos se traducen en las puertas
+públicas de IMGUI de Unity (ver `WORLDFALL_EXPANSION_V3.md`).
 
 **Regla**: si un método no aparece en los mods de la build 719, **no lo uses**.
 Puede haber cambiado de firma (los mods antiguos fallan al recompilar con `error CS`).
@@ -156,3 +186,4 @@ dev/check.sh   # requiere .NET SDK 8
 | Versión | Feature | Escribe en el mundo | Doc |
 |---|---|---|---|
 | 0.2.0 | Crónica → Búsquedas (trono, hijo de difunto, ciudad sin líder, amantes separados) | No | `docs/BUSQUEDAS.md` |
+| 3.0.0 | Worldfall en español (2.230 textos), búsquedas desde PeceraWB, brújula en primera persona | No | `docs/WORLDFALL_EXPANSION_V3.md` |

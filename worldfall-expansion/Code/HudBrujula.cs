@@ -83,10 +83,12 @@ namespace WorldfallExpansion
                 estilo.fontSize = px; sombra.fontSize = px;
                 float y = Screen.height * (float)Estado.Cfg.Num("brujula_altura", 0.07);
                 var r = new Rect(0f, y, Screen.width, px * 2f);
+                Traduccion.Saltar = true;
                 GUI.Label(new Rect(r.x + 1f, r.y + 1f, r.width, r.height), linea, sombra);
                 GUI.Label(r, linea, estilo);
             }
             catch (Exception e) { Estado.Fallo("brujula_dibujo", e); }
+            finally { Traduccion.Saltar = false; }
         }
     }
 }

@@ -1,4 +1,6 @@
-# Crónica → Búsquedas (worldfall-expansion v0.2.0)
+# Crónica → Búsquedas (worldfall-expansion)
+
+> Desde la v3.0: búsquedas también desde PeceraWB y brújula. Ver `WORLDFALL_EXPANSION_V3.md`.
 
 El plugin observa el mundo y abre **búsquedas**: personajes concretos a los que seguir (en
 modo dios o caminando en primera persona con Worldfall) porque les ha pasado algo importante.
@@ -15,6 +17,9 @@ pasar es que falle la foto: verás un `[WorldfallExp] foto_...` en `Player.log` 
 | **El hijo de X** | Muere un rey o líder de ciudad con hijos pequeños | El niño llega a adulto | El niño muere |
 | **Sin gobierno tras X** | Muere el líder de una ciudad y la ciudad queda sin líder | La ciudad tiene un líder nuevo | La ciudad desaparece |
 | **Amantes separados** | Una pareja que vivía en el mismo reino acaba en reinos distintos (guerra, conquista, migración) | Vuelven a vivir en el mismo reino | Uno muere o dejan de ser pareja |
+| **Venganza por X** (PeceraWB) | La pecera anota un regicidio | Muere el asesino | — |
+| **El desterrado X** (PeceraWB) | La pecera destierra a alguien (Nivel 3) | Encuentra una ciudad nueva | Muere |
+| **El pretendiente de X** (PeceraWB) | Sucesión disputada: el que perdió | Se corona en algún reino | Muere |
 
 Todas **caducan** a los `busquedas_caducidad_seg` segundos de mundo. Al cargar una partida, la
 primera foto es la **línea base**: lo que ya estaba así antes no se convierte en búsqueda.
@@ -69,10 +74,7 @@ cumplida, fallida o caducada. Se rota al pasar de 2 MB.
 
 - **Las búsquedas no se guardan entre sesiones.** Al recargar se empieza con una línea base nueva.
   El registro `.jsonl` sí queda.
-- **No hay posición ni brújula todavía.** La búsqueda dice en qué reino vive el objetivo. Para
-  marcar dirección y distancia en primera persona hace falta la posición de la unidad
-  (`current_tile` / `current_position`), que **no está verificada** en la build 719. Es la fase 2:
-  verifícala en un mod de la build 719 y la añado.
+- **Brújula:** desde la v3.0 (`current_position`, verificada en el binario de la build 719).
 - **Cómo se detecta una muerte.** Una unidad cuenta como muerta cuando desaparece de
   `units.getSimpleList()` y su `isAlive()` es falso. Si una sigue viva fuera de la lista
   (por ejemplo, embarcada), se sigue contando como viva.

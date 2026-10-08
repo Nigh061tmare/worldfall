@@ -12,7 +12,7 @@ namespace WorldfallExpansion
     // Persistencia SOLO en LocalLow\mkarpenko\WorldBox\WorldfallExpansion\ (nunca en los saves del juego).
     internal static class Estado
     {
-        public const string Version = "0.2.0";
+        public const string Version = "3.0.0";
         public static bool Activo;
         public static string Dir = "";
         public static Config Cfg = new Config();

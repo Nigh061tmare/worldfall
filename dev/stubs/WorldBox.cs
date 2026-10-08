@@ -28,7 +28,7 @@ public class Actor : BaseSimObject
     public string getName() { return ""; }
     public bool hasLover() { return false; }
     public bool hasFamily() { return false; }
-    public IEnumerable<Actor> getChildren(bool pOnlyAlive) { return new List<Actor>(); }
+    public IEnumerable<Actor> getChildren(bool pOnlyCurrentFamily = true) { return new List<Actor>(); }
     public void setCity(City pCity) { }
     public void addRenown(int pAmount) { }
 }
@@ -44,25 +44,25 @@ public class KingdomData { public string name; }
 public class Kingdom
 {
     public KingdomData data;
-    public bool wild { get { return false; } }
+    public bool wild;
     public Actor king;
 }
 
 public class ActorManager { public List<Actor> getSimpleList() { return new List<Actor>(); } }
 
-public class MapStats { public string name; public long id; }
+// Verificado en Assembly-CSharp (build 719): World es estatica y World.world es un MapBox.
+// MapBox.map_stats es INTERNAL: solo se lee por reflexion (Traverse), por eso no esta aqui.
+public static class World { public static MapBox world; }
 
-public class World
+public class MapBox
 {
-    public static World world;
     public ActorManager units;
-    public MapStats map_stats;
     public double getCurWorldTime() { return 0; }
 }
 
 public static class WorldTip
 {
-    public static void showNow(string pText, bool pTranslate, string pPosition, float pTime) { }
+    public static void showNow(string pText, bool pTranslate = true, string pPosition = "center", float pTime = 3f, string pColor = "#F3961F") { }
 }
 
 public static class DiplomacyManager
