@@ -137,3 +137,22 @@ voz_tecla=F10
    `Init Mod`/`Post-Init Mod` salen sin errores.
 4. Si es un cambio de UI, entra a un mundo y compruébalo en vivo.
 5. Guarda siempre una copia de la partida antes de probar cambios que escriban en el mundo.
+
+## 9. Comprobación sin el juego (`dev/`)
+
+```
+dev/check.sh   # requiere .NET SDK 8
+```
+
+- `dev/Core.Tests`: tests del `Code/Core` en **C# 5**, sin Unity.
+- `dev/Check`: compila **todo** `worldfall-expansion/Code` en C# 5, con avisos tratados como errores,
+  contra `dev/stubs/`. Los stubs contienen **solo** las firmas de la §4. Si el mod usa una firma no
+  verificada, falla con `error CS1061`.
+- Para añadir una firma: verifícala en un mod de la build 719, añádela a la §4 y luego a `dev/stubs/WorldBox.cs`.
+- No sustituye a probar en partida: los stubs no reproducen el comportamiento del juego, solo los tipos.
+
+## 10. Features de worldfall-expansion
+
+| Versión | Feature | Escribe en el mundo | Doc |
+|---|---|---|---|
+| 0.2.0 | Crónica → Búsquedas (trono, hijo de difunto, ciudad sin líder, amantes separados) | No | `docs/BUSQUEDAS.md` |

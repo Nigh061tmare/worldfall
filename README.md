@@ -14,9 +14,9 @@ criaturas, poderes, biomas o UI funciona igual en modo dios y en primera persona
 
 | Carpeta | Qué es | Estado |
 |---|---|---|
-| `worldfall-expansion/` | Plugin NML base para expandir Worldfall (criaturas, poderes, UI 3D) | Esqueleto listo para crecer |
-| `pecera/` | PeceraWB completo: afectos, facciones, rumores, juicios, linaje, sucesión, mentoría, nivel 3 | Funcional en tu partida |
-| `herramientas/` | Scripts de sincronización e instalación | Listos |
+| `worldfall-expansion/` | Plugin NML para expandir Worldfall. v0.2.0: **Crónica → Búsquedas** (solo lectura, ver `docs/BUSQUEDAS.md`) | Probado fuera del juego; pendiente de probar en partida |
+| `PeceraWB/` | PeceraWB completo: afectos, facciones, rumores, juicios, linaje, sucesión, mentoría, nivel 3 | Funcional en tu partida |
+| `dev/` | Tests del Core y comprobación C# 5 contra stubs con solo la API verificada (`dev/check.sh`). **No se copia al juego** | CI en cada push |
 
 ## Reglas de oro (léelas antes de expandir)
 

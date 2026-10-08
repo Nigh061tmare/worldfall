@@ -20,3 +20,6 @@ Thumbs.db
 
 # Nota: Worldfall.dll NO se sube (propiedad del autor). Solo se documenta
 # dónde obtenerlo (Workshop / worldfall3d.com / backup local del usuario).
+# Salidas de compilacion de dev/ (tests y comprobacion contra stubs)
+bin/
+obj/

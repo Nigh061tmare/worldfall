@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Compila el codigo REAL del mod (Code/**) contra stubs con solo la API verificada.
+       C# 5 como el compilador del NML, avisos = errores. No produce nada que se instale. -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>5</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <Nullable>disable</Nullable>
+    <AssemblyName>WorldfallExpansion.Check</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../worldfall-expansion/Code/**/*.cs" />
+    <Compile Include="../stubs/*.cs" />
+  </ItemGroup>
+</Project>

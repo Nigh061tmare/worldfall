@@ -23,7 +23,8 @@ namespace WorldfallExpansion
             try
             {
                 Init();
-                Debug.Log("[WorldfallExp] v0.1.0 cargado. Worldfall sigue siendo el del Workshop.");
+                Debug.Log("[WorldfallExp] v" + Estado.Version + " cargado. Worldfall sigue siendo el del Workshop. Datos en " + Estado.Dir
+                          + " (" + Estado.Cfg.Str("busquedas_tecla") + " lista de busquedas)");
             }
             catch (Exception e)
             {
@@ -34,7 +35,10 @@ namespace WorldfallExpansion
         static void Init()
         {
             // Config propia (LocalLow\mkarpenko\WorldBox\WorldfallExpansion\config.txt)
-            // Mundo.Prepara();
+            Estado.Inicia();
+            if (!Estado.Activo) { Debug.Log("[WorldfallExp] activo=0: inerte"); return; }
+            // Cronica -> Busquedas: solo lectura, sin Harmony (compara fotos del mundo).
+            Busquedas.Inicia();
             // Parchea hooks propios (mismo patron que PeceraWB/Code/Hooks.cs)
             // Parchea(typeof(HookHUD));
             // Parchea(typeof(HookCriaturas));
@@ -49,6 +53,8 @@ namespace WorldfallExpansion
         void Update()
         {
             // Tick del plugin (solo si hay mundo cargado y el mod esta activo)
+            try { Busquedas.Tick(); }
+            catch (Exception e) { Estado.Fallo("Tick", e); }
         }
     }
 }

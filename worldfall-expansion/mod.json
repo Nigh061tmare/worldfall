@@ -1,7 +1,7 @@
 {
   "name": "Worldfall Expansion",
   "author": "JoseLuis",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Plugin companero de Worldfall: anade contenido al mundo (criaturas, poderes, UI) que Worldfall renderiza en 3D. No toca Worldfall.dll: sobrevive a sus actualizaciones.",
   "targetGameBuild": 719,
   "GUID": "joseluis_worldfall_expansion",
