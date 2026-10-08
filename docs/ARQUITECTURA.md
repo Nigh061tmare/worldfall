@@ -75,7 +75,8 @@ WorldTip.showNow(texto, false, "top", s);  // aviso en pantalla
 
 // Reino/guerra
 kingdom.data.name; kingdom.wild; kingdom.king;
-DiplomacyManager.startWar(atq, def);       // declarar guerra (parcheable)
+DiplomacyManager.startWar(...)             // OJO: INTERNAL con 4 parametros (atq, def, WarTypeAsset, bool):
+                                           // se engancha con Harmony por nombre o se llama por reflexion (ver 4.4)
 ```
 
 ### 4.1 Verificado en el binario (Assembly-CSharp build 719, hash 51D275F0…)
@@ -107,6 +108,32 @@ FirstPerson.WorldBoxMod.Instance   // public static
 ```
 Todo lo demás de Worldfall es `internal`: no se toca. Sus textos se traducen en las puertas
 públicas de IMGUI de Unity (ver `WORLDFALL_EXPANSION_V3.md`).
+
+### 4.3 Catálogos del juego (contenido nuevo que Worldfall usa solo)
+
+```csharp
+AssetManager.items.clone(nuevoId, baseId)   // como ItemLibrary.init; BaseStats es ICloneable
+item.setCost(oro, res1, n1, res2, n2); item.translation_key; item.base_stats["damage"] = v;
+// tras post_init hay que copiar a mano: gameplay_sprites, item_modifiers, cost_coins_resources
+AssetManager.traits.add(new ActorTrait { id, path_icon, group_id, type, can_be_given, needs_to_be_explored = false })
+AssetManager.powers.add(new GodPower { id, name, path_icon, rank }); power.click_action = (tile, id) => ...
+World.world.units.spawnNewUnit(especie, tile, sonido, milagro, altura)   // public
+NanoObject.setName(string, bool = true); WorldTile.x / .y; SpriteTextureLoader.getSprite(ruta)
+LocalizedTextManager.add/stringExists/getText; LocalizedTextManager.current_language.id ("es")
+NML: TabManager.CreateTab(...), PowerButtonCreator.CreateGodPowerButton/AddButtonToTab, Locales/<idioma>.json
+```
+Lo que Worldfall lee: `AssetManager.items` (recetas con coste, al abrir **I**), `items`/`traits`
+(panel de regalos), `happiness_dialog_<tipo>_<n>` (recuerdos de los PNJ, de 0 a 23).
+Especies sin modelo propio → las pinta en vóxeles desde su sprite.
+
+### 4.4 Internos del juego (solo por reflexión, con apagado automático)
+
+```csharp
+internal War DiplomacyManager.startWar(Kingdom, Kingdom, WarTypeAsset, bool)   // WarTypeLibrary.normal / .rebellion
+internal Kingdom City.makeOwnKingdom(Actor, bool pRebellion, bool pFellApart)
+// Orden del propio juego (DiplomacyHelpersRebellion.startRebellion): removeLeader, makeOwnKingdom, joinCity, startWar
+public: Kingdom.isInWarWith, capital, countCities, hasAlliance, getAlliance; Actor.isCityLeader, joinCity
+```
 
 **Regla**: si un método no aparece en los mods de la build 719, **no lo uses**.
 Puede haber cambiado de firma (los mods antiguos fallan al recompilar con `error CS`).
@@ -175,8 +202,9 @@ dev/check.sh   # requiere .NET SDK 8
 ```
 
 - `dev/Core.Tests`: tests del `Code/Core` en **C# 5**, sin Unity.
-- `dev/Check`: compila **todo** `worldfall-expansion/Code` en C# 5, con avisos tratados como errores,
-  contra `dev/stubs/`. Los stubs contienen **solo** las firmas de la §4. Si el mod usa una firma no
+- `dev/Check` y `dev/CheckPecera`: compilan **todo** `worldfall-expansion/Code` y `PeceraWB/Code` en C# 5
+  contra `dev/stubs/` (el plugin además con los avisos tratados como errores).
+- `dev/PeceraWB.Tests`: tests del Core de la pecera (diplomacia, guerra civil, intervenciones). Los stubs contienen **solo** las firmas de la §4. Si el mod usa una firma no
   verificada, falla con `error CS1061`.
 - Para añadir una firma: verifícala en un mod de la build 719, añádela a la §4 y luego a `dev/stubs/WorldBox.cs`.
 - No sustituye a probar en partida: los stubs no reproducen el comportamiento del juego, solo los tipos.
@@ -187,3 +215,4 @@ dev/check.sh   # requiere .NET SDK 8
 |---|---|---|---|
 | 0.2.0 | Crónica → Búsquedas (trono, hijo de difunto, ciudad sin líder, amantes separados) | No | `docs/BUSQUEDAS.md` |
 | 3.0.0 | Worldfall en español (2.230 textos), búsquedas desde PeceraWB, brújula en primera persona | No | `docs/WORLDFALL_EXPANSION_V3.md` |
+| 4.0.0 | Arsenal y rasgos, HUD social, búsquedas 2.0 (guardadas, encadenadas, recompensas), frases de PNJ, poderes y bestias legendarias; PeceraWB 0.2.0: guerras por odio y civiles | Solo con interruptor | `docs/V4_MEGA_EXPANSION.md` |

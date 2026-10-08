@@ -1,8 +1,8 @@
 {
   "name": "Worldfall Expansion",
   "author": "JoseLuis",
-  "version": "3.0.0",
-  "description": "Companero de Worldfall: Worldfall en espanol, busquedas generadas por el mundo y por PeceraWB, y brujula en primera persona. No toca Worldfall.dll: sobrevive a sus actualizaciones.",
+  "version": "4.0.0",
+  "description": "Mega expansion companera de Worldfall: Worldfall en espanol, Arsenal y rasgos nuevos, bestias legendarias, poderes de dios, busquedas con brujula y la pecera en primera persona. No toca Worldfall.dll: sobrevive a sus actualizaciones.",
   "targetGameBuild": 719,
   "GUID": "joseluis_worldfall_expansion",
   "Dependencies": [],

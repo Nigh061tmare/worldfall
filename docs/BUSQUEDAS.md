@@ -20,6 +20,8 @@ pasar es que falle la foto: verás un `[WorldfallExp] foto_...` en `Player.log` 
 | **Venganza por X** (PeceraWB) | La pecera anota un regicidio | Muere el asesino | — |
 | **El desterrado X** (PeceraWB) | La pecera destierra a alguien (Nivel 3) | Encuentra una ciudad nueva | Muere |
 | **El pretendiente de X** (PeceraWB) | Sucesión disputada: el que perdió | Se corona en algún reino | Muere |
+| **El heredero desposeído de X** (cadena) | Una búsqueda de trono falla porque otro se corona | Se corona en algún reino | Muere |
+| **Caza: X** (poder Bestia legendaria) | Sueltas una bestia legendaria | La bestia muere | — |
 
 Todas **caducan** a los `busquedas_caducidad_seg` segundos de mundo. Al cargar una partida, la
 primera foto es la **línea base**: lo que ya estaba así antes no se convierte en búsqueda.
@@ -72,8 +74,8 @@ cumplida, fallida o caducada. Se rota al pasar de 2 MB.
 
 ## Límites conocidos (v0.2.0)
 
-- **Las búsquedas no se guardan entre sesiones.** Al recargar se empieza con una línea base nueva.
-  El registro `.jsonl` sí queda.
+- **Guardado entre sesiones (desde v4.0):** `busquedas_activas.jsonl`. Las de ciudad no se guardan, porque
+  la ciudad no tiene un id estable. Las de trono se vuelven a enlazar por el nombre del reino.
 - **Brújula:** desde la v3.0 (`current_position`, verificada en el binario de la build 719).
 - **Cómo se detecta una muerte.** Una unidad cuenta como muerta cuando desaparece de
   `units.getSimpleList()` y su `isAlive()` es falso. Si una sigue viva fuera de la lista
