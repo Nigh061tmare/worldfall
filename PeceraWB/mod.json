@@ -1,0 +1,11 @@
+{
+  "name": "PeceraWB",
+  "author": "JoseLuis",
+  "version": "0.1.0",
+  "description": "Pecera para WorldBox: afectos, facciones, rumores, juicios, cultura y voz con LLM local. Solo lee el mundo: no toca Worldfall ni ningun otro mod.",
+  "targetGameBuild": 719,
+  "GUID": "joseluis_peceraWB",
+  "Dependencies": [],
+  "OptionalDependencies": [],
+  "IncompatibleWith": []
+}
