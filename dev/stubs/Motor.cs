@@ -11,6 +11,7 @@ namespace UnityEngine
     public class Behaviour : Component { }
     public class MonoBehaviour : Behaviour { }
     public class Camera : Behaviour { public static Camera main { get { return null; } } }
+    public class Sprite : Object { }
 
     public struct Vector2 { public float x, y; public Vector2(float x, float y) { this.x = x; this.y = y; } }
     public struct Vector3 { public float x, y, z; }

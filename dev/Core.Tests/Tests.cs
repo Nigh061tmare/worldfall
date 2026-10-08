@@ -46,8 +46,17 @@ static class Tests
         return ev.FindAll(x => x.Estado == e);
     }
 
-    static int Main()
+    static int Main(string[] args)
     {
+        // dotnet run --project dev/Core.Tests -- --locales worldfall-expansion/Locales  (regenera los JSON)
+        if (args.Length == 2 && args[0] == "--locales")
+        {
+            System.IO.Directory.CreateDirectory(args[1]);
+            System.IO.File.WriteAllText(System.IO.Path.Combine(args[1], "es.json"), LocaleJson(true), new System.Text.UTF8Encoding(false));
+            System.IO.File.WriteAllText(System.IO.Path.Combine(args[1], "en.json"), LocaleJson(false), new System.Text.UTF8Encoding(false));
+            Console.WriteLine("Locales escritos en " + args[1]);
+            return 0;
+        }
         LineaBase();
         TronoCumplido();
         TronoUsurpado();
@@ -67,6 +76,7 @@ static class Tests
         BrujulaTest();
         PeceraTest();
         FicheroWorldfall();
+        CatalogoTest();
         Console.WriteLine(ok + " comprobaciones OK, " + ko + " fallos");
         return ko == 0 ? 0 : 1;
     }
@@ -394,5 +404,56 @@ static class Tests
         for (int i = 0; i < 5000; i++) t.Traduce("Your army is already marching on City" + i + " (" + i + " warriors).");
         sw.Stop();
         Check(sw.ElapsedMilliseconds < 2000, "5000 traducciones nuevas en " + sw.ElapsedMilliseconds + " ms");
+    }
+    static string LocaleJson(bool es)
+    {
+        var sb = new System.Text.StringBuilder("{\n");
+        bool primero = true;
+        foreach (var kv in Catalogo.Textos(es))
+        {
+            if (!primero) sb.Append(",\n");
+            primero = false;
+            sb.Append("  \"").Append(Texto_.Escape(kv.Key)).Append("\": \"").Append(Texto_.Escape(kv.Value)).Append('"');
+        }
+        return sb.Append("\n}\n").ToString();
+    }
+
+    static string Raiz()
+    {
+        string dir = System.IO.Directory.GetCurrentDirectory();
+        for (int i = 0; i < 6 && dir != null; i++)
+        {
+            if (System.IO.Directory.Exists(System.IO.Path.Combine(dir, "worldfall-expansion"))) return dir;
+            dir = System.IO.Path.GetDirectoryName(dir);
+        }
+        return null;
+    }
+
+    static void CatalogoTest()
+    {
+        var errores = Catalogo.Valida();
+        Check(errores.Count == 0, "catalogo valido: " + string.Join("; ", errores.ToArray()));
+        Check(Catalogo.Objetos.Length >= 15 && Catalogo.Rasgos.Length >= 12, "volumen del catalogo");
+        int fabricables = 0;
+        foreach (var o in Catalogo.Objetos)
+            if (!o.Base.StartsWith("ring_") && !o.Base.StartsWith("amulet_")) fabricables++;
+        Check(fabricables >= 12, "armas y armaduras fabricables en Worldfall: " + fabricables);
+        foreach (var o in Catalogo.Objetos)
+        {
+            float d; o.Stats.TryGetValue("damage", out d);
+            float a; o.Stats.TryGetValue("armor", out a);
+            if (d > 14 || a > 14) Check(false, o.Id + " desequilibrado (dano " + d + ", armadura " + a + ")");
+        }
+        Check(Catalogo.ClaveObjeto(Catalogo.Objetos[0]) == "item_" + Catalogo.Objetos[0].Id, "clave = translation_key del juego");
+        Check(Catalogo.ClaveRasgo(Catalogo.Rasgos[0]) == "trait_" + Catalogo.Rasgos[0].Id, "clave de rasgo = typed_id + _ + id");
+        string raiz = Raiz();
+        Check(raiz != null, "raiz del repo");
+        if (raiz == null) return;
+        foreach (bool es in new[] { true, false })
+        {
+            string f = System.IO.Path.Combine(raiz, "worldfall-expansion", "Locales", es ? "es.json" : "en.json");
+            Check(System.IO.File.Exists(f) && System.IO.File.ReadAllText(f, System.Text.Encoding.UTF8) == LocaleJson(es),
+                  System.IO.Path.GetFileName(f) + " al dia (regenera con: dotnet run --project dev/Core.Tests -- --locales worldfall-expansion/Locales)");
+        }
     }
 }

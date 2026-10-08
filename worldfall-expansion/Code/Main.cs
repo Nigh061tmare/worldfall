@@ -61,6 +61,7 @@ namespace WorldfallExpansion
         void Update()
         {
             if (!Estado.Activo) return;
+            try { Contenido.Tick(); } catch (Exception e) { Estado.Fallo("TickContenido", e); }
             try { Busquedas.Tick(); } catch (Exception e) { Estado.Fallo("Tick", e); }
             try { PuentePecera.Tick(); } catch (Exception e) { Estado.Fallo("TickPecera", e); }
             try { HudBrujula.Tick(); } catch (Exception e) { Estado.Fallo("TickBrujula", e); }

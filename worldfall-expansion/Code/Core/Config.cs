@@ -22,6 +22,7 @@ namespace WorldfallExpansion.Core
             new[] { "busquedas_ciudades", "1" },        // muere el lider de una ciudad y queda sin gobierno
             new[] { "busquedas_amantes", "1" },         // una pareja queda en reinos distintos
             new[] { "busquedas_tecla", "F8" },          // lista las busquedas activas (F9/F10 son de PeceraWB)
+            new[] { "contenido", "1" },                 // Arsenal (16 objetos) y 12 rasgos nuevos en el juego (Worldfall los usa)
             new[] { "pecera_busquedas", "1" },          // regicidios, destierros y disputas de PeceraWB abren busquedas
             new[] { "brujula", "1" },                   // linea arriba con distancia y rumbo a la busqueda que sigues
             new[] { "brujula_tecla", "F7" },            // cambia de busqueda seguida
