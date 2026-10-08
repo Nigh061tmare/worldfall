@@ -145,6 +145,7 @@ namespace HarmonyLib
 
     public static class AccessTools
     {
+        public static System.Reflection.MethodInfo Method(Type type, string name, Type[] parameters = null, Type[] generics = null) { return null; }
         // En Harmony real devuelve «ref F»; aqui sin ref para poder compilar los stubs en C# 5.
         public delegate F FieldRef<in T, F>(T instance);
         public static FieldRef<T, F> FieldRefAccess<T, F>(string fieldName) { return null; }

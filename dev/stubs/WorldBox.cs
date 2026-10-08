@@ -35,12 +35,15 @@ public class Actor : BaseSimObject
     public void addRenown(int pValue) { }
     public bool addTrait(string pTraitID, bool pRemoveOpposites = false) { return false; }
     public bool hasTrait(string pTraitID) { return false; }
+    public bool isCityLeader() { return false; }
+    public void joinCity(City pCity) { }
 }
 
 public class City
 {
     public Actor leader;
     public void removeLeader() { }
+    // internal en el juego (se usa por reflexion): Kingdom makeOwnKingdom(Actor, bool pRebellion, bool pFellApart)
 }
 
 public class KingdomData { public string name; }
@@ -50,7 +53,13 @@ public class Kingdom
     public KingdomData data;
     public bool wild;
     public Actor king;
+    public City capital;
+    public bool isInWarWith(Kingdom pKingdom) { return false; }
+    public int countCities() { return 0; }
+    public bool hasAlliance() { return false; }
+    public Alliance getAlliance() { return null; }
 }
+public class Alliance { }
 
 public class ActorManager
 {
@@ -65,6 +74,7 @@ public static class World { public static MapBox world; }
 public class MapBox
 {
     public ActorManager units;
+    public DiplomacyManager diplomacy;
     public double getCurWorldTime() { return 0; }
 }
 
@@ -73,10 +83,10 @@ public static class WorldTip
     public static void showNow(string pText, bool pTranslate = true, string pPosition = "center", float pTime = 3f, string pColor = "#F3961F") { }
 }
 
-public static class DiplomacyManager
-{
-    public static void startWar(Kingdom pAttacker, Kingdom pDefender) { }
-}
+// DiplomacyManager.startWar es INTERNAL en la build 719 (4 parametros): solo por Harmony/reflexion.
+public class DiplomacyManager { }
+public class WarTypeAsset : Asset { }
+public static class WarTypeLibrary { public static WarTypeAsset normal; public static WarTypeAsset rebellion; }
 
 // Ventana de unidad (PeceraWB/UnidadUi.cs). Verificado: UnitWindow.name_input (NameInput), SelectedUnit.unit.
 public class NameInput : UnityEngine.MonoBehaviour { }

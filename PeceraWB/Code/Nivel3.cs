@@ -42,6 +42,7 @@ namespace PeceraWB
                 if (c == null) return false;
                 if (c.leader == a) c.removeLeader();
                 a.setCity(null);
+                MarcaRasgo(a, "wfx_desterrado", motivo);
                 string n = NombreDe(Id(a));
                 Hito("destierro", n + " es desterrado: " + motivo, 5);
                 Memoria.Registra(Id(a), "destierro", Id(a), "fue desterrado: " + motivo, 1.0);
@@ -58,6 +59,7 @@ namespace PeceraWB
             if (!Nivel3Activo || res == null || !res.Disputada || res.Rival.Length == 0) return;
             Actor rival;
             if (!Vivos.TryGetValue(res.Rival, out rival)) return;
+            MarcaRasgo(rival, "wfx_pretendiente", "perdio la disputa por el trono");
             if (Destierra(rival, "perdio la disputa por el trono ante " + NombreDe(res.Sucesor)))
                 Cultura.Suceso("venganza", 1);
         }

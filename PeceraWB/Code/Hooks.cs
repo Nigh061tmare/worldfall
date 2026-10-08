@@ -65,6 +65,7 @@ namespace PeceraWB
                 {
                     string il = Id(amante); Registra(amante);
                     Afectos.Evento(il, ia, TipoEvento.Duelo, 0.9);
+                    MarcaRasgo(amante, "wfx_corazon_roto", na + " mato a " + nv);
                     Memoria.Registra(il, "duelo", ia, na + " mato a " + nv + ", a quien amaba", 1.0);
                     if (Notable(amante)) VozLlm.Pide(il, ia, -1, na + " acaba de matar a " + nv + ", su amado");
                 }
@@ -79,6 +80,7 @@ namespace PeceraWB
             {
                 string il = Id(amante); Registra(amante);
                 if (Notable(amante) || Notable(v)) Hito("viudez", Nombres[il] + " llora la muerte de " + nv, 3);
+                MarcaRasgo(amante, "wfx_corazon_roto", "murio " + nv);
                 Memoria.Registra(il, "duelo", iv, nv + " murio", 0.9);
                 Afectos.Evento(il, iv, TipoEvento.Duelo, 0.5);
                 if (Notable(amante)) VozLlm.Pide(il, iv, -1, nv + " ha muerto");

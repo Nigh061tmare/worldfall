@@ -36,6 +36,11 @@ namespace PeceraWB
             new[] { "informe_tecla", "F9" },
             new[] { "voz_tecla", "F10" },
             new[] { "exporta_social", "1" },        // estado_social.jsonl para worldfall-expansion (solo carpeta de la pecera)
+            new[] { "intervenciones", "1" },        // lee los poderes de dios de worldfall-expansion (cronica y afectos)
+            new[] { "nivel3_guerras", "0" },        // ESCRIBE (con nivel3=1): reyes que se odian entran en guerra
+            new[] { "nivel3_guerra_odio", "0.5" },  // sentimiento <= -esto para declarar la guerra
+            new[] { "nivel3_guerras_civiles", "0" },// ESCRIBE (con nivel3=1): facciones enfrentadas -> rebelion de una ciudad
+            new[] { "nivel3_rasgos", "1" },         // con nivel3=1: rasgos del Arsenal (desterrado, pretendiente, corazon roto)
         };
 
         public static void Init(string dir)
@@ -254,6 +259,8 @@ namespace PeceraWB
             if (wt - tFacc >= 45) { tFacc = wt; Facciones(); }
             Mentorias(wt);
             TickExporta();
+            TickIntervenciones();
+            TickNivel3Guerras(wt);
             if (real - tGuarda >= 60f) { tGuarda = real; Guarda(); }
             if (real - tDiag >= 45f) { tDiag = real; Diagnostico(wt); }
         }
