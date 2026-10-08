@@ -76,6 +76,7 @@ public class GameLanguageAsset : Asset { }
 public class LocalizedTextManager
 {
     public static GameLanguageAsset current_language;
+    public static UnityEngine.Font current_font { get { return null; } }
     public static bool stringExists(string pKey) { return false; }
     public static string getText(string pKey, object text = null, bool pForceEnglish = false) { return pKey; }
     public static void add(string pKey, string pTranslation, bool pReplace = false, string pFileName = "", bool pCheckForCharacters = true) { }

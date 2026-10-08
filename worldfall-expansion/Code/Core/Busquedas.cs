@@ -26,6 +26,58 @@ namespace WorldfallExpansion.Core
         public double Inicio, Fin;
         public int Prioridad;
         public bool Visto;                   // destierro: ya se le vio sin ciudad
+
+        // Persistencia entre sesiones (busquedas_activas.jsonl). Reino/Ciudad son claves de sesion: no se
+        // guardan; el trono se vuelve a enlazar por el nombre del reino (OtroNombre).
+        public string ToJson()
+        {
+            var sb = new StringBuilder("{");
+            sb.Append("\"n\":").Append(Num);
+            sb.Append(",\"tipo\":\"").Append(Tipo.ToString()).Append('"');
+            sb.Append(",\"ini\":").Append(Inicio.ToString("0.#", CultureInfo.InvariantCulture));
+            sb.Append(",\"prio\":").Append(Prioridad);
+            sb.Append(",\"visto\":").Append(Visto ? 1 : 0);
+            foreach (var kv in new[] { new[] { "clave", Clave }, new[] { "obj", Objetivo }, new[] { "objn", ObjetivoNombre },
+                                       new[] { "otro", Otro }, new[] { "otron", OtroNombre }, new[] { "tit", Titulo }, new[] { "desc", Descripcion } })
+                sb.Append(",\"").Append(kv[0]).Append("\":\"").Append(Texto_.Escape(kv[1])).Append('"');
+            return sb.Append('}').ToString();
+        }
+
+        public static Busqueda Desde(string linea)
+        {
+            string tipo = LectorPecera.Campo(linea, "tipo"), clave = LectorPecera.Campo(linea, "clave");
+            if (tipo == null || clave == null) return null;
+            TipoBusqueda t;
+            try { t = (TipoBusqueda)Enum.Parse(typeof(TipoBusqueda), tipo); }
+            catch (Exception) { return null; }
+            return new Busqueda
+            {
+                Num = (int)Numero(linea, "n"), Tipo = t, Clave = clave, Inicio = Numero(linea, "ini"),
+                Prioridad = (int)Numero(linea, "prio"), Visto = Numero(linea, "visto") > 0,
+                Objetivo = LectorPecera.Campo(linea, "obj") ?? "", ObjetivoNombre = LectorPecera.Campo(linea, "objn") ?? "",
+                Otro = LectorPecera.Campo(linea, "otro") ?? "", OtroNombre = LectorPecera.Campo(linea, "otron") ?? "",
+                Titulo = LectorPecera.Campo(linea, "tit") ?? "", Descripcion = LectorPecera.Campo(linea, "desc") ?? "",
+            };
+        }
+
+        static double Numero(string linea, string k)
+        {
+            string key = "\"" + k + "\":";
+            int i = linea.IndexOf(key, StringComparison.Ordinal);
+            if (i < 0) return 0;
+            i += key.Length;
+            int j = i;
+            while (j < linea.Length && (char.IsDigit(linea[j]) || linea[j] == '.' || linea[j] == '-')) j++;
+            double v;
+            return double.TryParse(linea.Substring(i, j - i), NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? v : 0;
+        }
+    }
+
+    // Recompensa REAL en el mundo al cerrarse una busqueda (solo con busquedas_recompensas=1, con tope).
+    public sealed class Recompensa
+    {
+        public string Id = "", Nombre = "", Rasgo = "", Motivo = "";
+        public int Renombre;
     }
 
     public sealed class EventoBusqueda
@@ -83,6 +135,7 @@ namespace WorldfallExpansion.Core
         readonly Dictionary<string, double> claves = new Dictionary<string, double>();
         FotoMundo anterior;
         int contador;
+        readonly List<Busqueda> pendientes = new List<Busqueda>();   // restauradas, a enlazar con la primera foto
 
         public TableroBusquedas(ReglasBusquedas reglas) { Reglas = reglas ?? new ReglasBusquedas(); }
 
@@ -94,17 +147,97 @@ namespace WorldfallExpansion.Core
         {
             activas.Clear();
             claves.Clear();
+            pendientes.Clear();
             anterior = null;
+        }
+
+        // Busquedas guardadas de una sesion anterior: se enlazan con la primera foto (linea base).
+        public void Restaura(IEnumerable<Busqueda> guardadas)
+        {
+            if (guardadas == null) return;
+            foreach (Busqueda b in guardadas)
+            {
+                if (b == null) continue;
+                pendientes.Add(b);
+                if (b.Num > contador) contador = b.Num;
+            }
+        }
+
+        public List<string> Serializa()
+        {
+            var l = new List<string>();
+            foreach (Busqueda b in activas) if (b.Tipo != TipoBusqueda.Ciudad) l.Add(b.ToJson());
+            return l;
+        }
+
+        void Enlaza(FotoMundo f)
+        {
+            foreach (Busqueda b in pendientes)
+            {
+                if (activas.Count >= Reglas.MaxActivas) break;
+                if (b.Tipo == TipoBusqueda.Ciudad) continue;                       // la ciudad no tiene id estable
+                if (b.Objetivo.Length > 0 && f.Unidad(b.Objetivo) == null) continue; // murio mientras no jugabas
+                if (b.Tipo == TipoBusqueda.Amantes && f.Unidad(b.Otro) == null) continue;
+                if (b.Tipo == TipoBusqueda.Trono)
+                {
+                    string k = null;
+                    foreach (var kv in f.Reinos)
+                        if (kv.Value.Nombre == b.OtroNombre) { if (k != null) { k = null; break; } k = kv.Key; }
+                    if (k == null) continue;
+                    b.Reino = k;
+                }
+                if (b.Inicio > f.Tiempo) b.Inicio = f.Tiempo;   // otra partida con el reloj mas atras
+                b.Estado = EstadoBusqueda.Activa;
+                activas.Add(b);
+                claves[b.Clave] = f.Tiempo;
+            }
+            pendientes.Clear();
+        }
+
+        // Tabla de recompensas: quien recibe que al cerrarse una busqueda (null = nada).
+        public static Recompensa RecompensaDe(Busqueda b, FotoMundo f)
+        {
+            if (b == null || f == null) return null;
+            FotoUnidad o = f.Unidad(b.Objetivo);
+            if (b.Estado == EstadoBusqueda.Cumplida)
+            {
+                switch (b.Tipo)
+                {
+                    case TipoBusqueda.Trono:
+                        if (o != null) return new Recompensa { Id = o.Id, Nombre = o.Nombre, Renombre = 10, Rasgo = "wfx_voz_del_pueblo", Motivo = "heredo el trono" };
+                        break;
+                    case TipoBusqueda.Pretendiente:
+                        if (o != null) return new Recompensa { Id = o.Id, Nombre = o.Nombre, Renombre = 15, Motivo = "conquisto una corona" };
+                        break;
+                    case TipoBusqueda.Huerfano:
+                        if (o != null) return new Recompensa { Id = o.Id, Nombre = o.Nombre, Renombre = 3, Rasgo = "wfx_vengador", Motivo = "crecio sin su padre" };
+                        break;
+                    case TipoBusqueda.Destierro:
+                        if (o != null) return new Recompensa { Id = o.Id, Nombre = o.Nombre, Renombre = 2, Rasgo = "wfx_peregrino", Motivo = "encontro un nuevo hogar" };
+                        break;
+                    case TipoBusqueda.Amantes:
+                        if (o != null) return new Recompensa { Id = o.Id, Nombre = o.Nombre, Renombre = 2, Motivo = "se reencontro con su amor" };
+                        break;
+                }
+            }
+            else if (b.Estado == EstadoBusqueda.Fallida && b.Tipo == TipoBusqueda.Amantes)
+            {
+                // Uno murio: el que queda vivo se lleva el corazon roto.
+                FotoUnidad vivo = o ?? f.Unidad(b.Otro);
+                if (vivo != null && (o == null || f.Unidad(b.Otro) == null))
+                    return new Recompensa { Id = vivo.Id, Nombre = vivo.Nombre, Rasgo = "wfx_corazon_roto", Motivo = "perdio a su amor" };
+            }
+            return null;
         }
 
         public List<EventoBusqueda> Compara(FotoMundo foto)
         {
             var ev = new List<EventoBusqueda>();
             if (foto == null) return ev;
-            if (anterior == null) { anterior = foto; return ev; }
+            if (anterior == null) { anterior = foto; Enlaza(foto); return ev; }
 
-            Cierra(foto, ev);
             var cand = new List<Busqueda>();
+            Cierra(foto, ev, cand);
             if (Reglas.Trono || Reglas.Huerfanos) MuertesDeReyes(foto, cand);
             if (Reglas.Ciudades || Reglas.Huerfanos) MuertesDeLideres(foto, cand);
             if (Reglas.Amantes) Separaciones(foto, cand);
@@ -126,7 +259,7 @@ namespace WorldfallExpansion.Core
 
         // ---------- cierre de busquedas abiertas ----------
 
-        void Cierra(FotoMundo foto, List<EventoBusqueda> ev)
+        void Cierra(FotoMundo foto, List<EventoBusqueda> ev, List<Busqueda> cand)
         {
             for (int i = activas.Count - 1; i >= 0; i--)
             {
@@ -142,7 +275,29 @@ namespace WorldfallExpansion.Core
                 b.Estado = e; b.Final = final; b.Fin = foto.Tiempo;
                 activas.RemoveAt(i);
                 ev.Add(new EventoBusqueda { B = b, Estado = e, Texto = final });
+                Busqueda sigue = Encadena(b, foto);
+                if (sigue != null) cand.Add(sigue);
             }
+        }
+
+        // Cadenas: una busqueda que acaba abre la siguiente historia.
+        //   Trono usurpado (el heredero sigue vivo y otro reina)  ->  «El heredero desposeído» (pretendiente)
+        static Busqueda Encadena(Busqueda b, FotoMundo f)
+        {
+            if (b.Tipo != TipoBusqueda.Trono || b.Estado != EstadoBusqueda.Fallida) return null;
+            FotoUnidad h = f.Unidad(b.Objetivo);
+            FotoReino r = f.Reino(b.Reino);
+            if (h == null || r == null || r.Rey == null || r.Rey == h.Id) return null;
+            FotoUnidad usurpador = f.Unidad(r.Rey);
+            string u = usurpador != null ? usurpador.Nombre : "otro";
+            return new Busqueda
+            {
+                Tipo = TipoBusqueda.Pretendiente, Clave = "pretendiente|" + h.Id,
+                Objetivo = h.Id, ObjetivoNombre = h.Nombre, OtroNombre = u,
+                Titulo = "El heredero desposeído de " + r.Nombre,
+                Descripcion = u + " le ha robado el trono de " + r.Nombre + " a " + h.Nombre + ". ¿Recuperará una corona?",
+                Prioridad = 9,
+            };
         }
 
         static EstadoBusqueda Evalua(Busqueda b, FotoMundo f, out string final)

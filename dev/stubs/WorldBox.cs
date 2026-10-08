@@ -30,7 +30,9 @@ public class Actor : BaseSimObject
     public bool hasFamily() { return false; }
     public IEnumerable<Actor> getChildren(bool pOnlyCurrentFamily = true) { return new List<Actor>(); }
     public void setCity(City pCity) { }
-    public void addRenown(int pAmount) { }
+    public void addRenown(int pValue) { }
+    public bool addTrait(string pTraitID, bool pRemoveOpposites = false) { return false; }
+    public bool hasTrait(string pTraitID) { return false; }
 }
 
 public class City
@@ -69,3 +71,8 @@ public static class DiplomacyManager
 {
     public static void startWar(Kingdom pAttacker, Kingdom pDefender) { }
 }
+
+// Ventana de unidad (PeceraWB/UnidadUi.cs). Verificado: UnitWindow.name_input (NameInput), SelectedUnit.unit.
+public class NameInput : UnityEngine.MonoBehaviour { }
+public class UnitWindow : UnityEngine.MonoBehaviour { public NameInput name_input; }
+public static class SelectedUnit { public static Actor unit { get { return null; } } }

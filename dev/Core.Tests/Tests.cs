@@ -77,6 +77,7 @@ static class Tests
         PeceraTest();
         FicheroWorldfall();
         CatalogoTest();
+        Fase2Test();
         Console.WriteLine(ok + " comprobaciones OK, " + ko + " fallos");
         return ko == 0 ? 0 : 1;
     }
@@ -399,6 +400,10 @@ static class Tests
         }
         Check(mal == 0, "plantillas sin choques: " + (total - mal) + "/" + total);
 
+        Check(t.Traduce("\"¡No!\" When I lost my love, 2 years ago.") == "\"¡No!\" Cuando perdí a mi amor, hace 2 años.",
+              "recuerdo compuesto: " + t.Traduce("\"¡No!\" When I lost my love, 2 years ago."));
+        Check(t.Traduce("When we won the war, last year.") == "Cuando ganamos la guerra, el año pasado.", "recuerdo sin frase");
+
         // Rendimiento: 5.000 textos distintos (como numeros cambiantes en el HUD) en poco tiempo.
         var sw = System.Diagnostics.Stopwatch.StartNew();
         for (int i = 0; i < 5000; i++) t.Traduce("Your army is already marching on City" + i + " (" + i + " warriors).");
@@ -455,5 +460,77 @@ static class Tests
             Check(System.IO.File.Exists(f) && System.IO.File.ReadAllText(f, System.Text.Encoding.UTF8) == LocaleJson(es),
                   System.IO.Path.GetFileName(f) + " al dia (regenera con: dotnet run --project dev/Core.Tests -- --locales worldfall-expansion/Locales)");
         }
+    }
+    static void Fase2Test()
+    {
+        // --- Persistencia: guardar, restaurar en otra sesion y enlazar con la primera foto ---
+        var t = new TableroBusquedas(new ReglasBusquedas());
+        t.Compara(new M(0).Reino("k1", "Norte", "rey").U("rey", "k1", rey: true, hijos: new[] { "hijo" }).U("hijo", "k1")
+                  .Reino("k2", "Sur", null).U("a", "k1", amante: "b").U("b", "k1", amante: "a").F);
+        t.Compara(new M(10).Reino("k1", "Norte", null).U("hijo", "k1").Reino("k2", "Sur", null).U("a", "k1", amante: "b").U("b", "k2", amante: "a").F);
+        Check(t.Activas.Count == 2, "dos busquedas abiertas antes de guardar");
+        var lineas = t.Serializa();
+        var restauradas = new List<Busqueda>();
+        foreach (string l in lineas) restauradas.Add(Busqueda.Desde(l));
+        Check(restauradas.TrueForAll(x => x != null), "las lineas guardadas se releen");
+        Check(restauradas.Exists(x => x.Tipo == TipoBusqueda.Trono && x.Objetivo == "hijo" && x.OtroNombre == "Norte"), "ida y vuelta del trono");
+
+        // Otra sesion: los reinos tienen OTRAS claves; el trono se enlaza por nombre. «b» ha muerto.
+        var t2 = new TableroBusquedas(new ReglasBusquedas());
+        t2.Restaura(restauradas);
+        var ev = t2.Compara(new M(5).Reino("x9", "Norte", null).U("hijo", "x9").U("a", "x9").F);
+        Check(ev.Count == 0, "restaurar no genera avisos");
+        Check(t2.Activas.Count == 1 && t2.Activas[0].Tipo == TipoBusqueda.Trono && t2.Activas[0].Reino == "x9",
+              "trono reenlazado por nombre; la de amantes cae (b murio fuera de juego)");
+        ev = t2.Compara(new M(15).Reino("x9", "Norte", "hijo").U("hijo", "x9", rey: true).F);
+        Check(De(ev, EstadoBusqueda.Cumplida).Count == 1, "la restaurada se cumple como una normal");
+        // Los numeros nuevos siguen tras los restaurados (aunque las restauradas caigan).
+        var t3 = new TableroBusquedas(new ReglasBusquedas());
+        t3.Restaura(new[] { new Busqueda { Num = 41, Tipo = TipoBusqueda.Huerfano, Clave = "z", Objetivo = "fantasma" } });
+        t3.Compara(new M(0).Reino("k1", "N", "r").U("r", "k1", rey: true, hijos: new[] { "h2" }).U("h2", "k1").F);
+        var nueva = t3.Compara(new M(10).Reino("k1", "N", null).U("h2", "k1").F);
+        Check(nueva.Count == 1 && nueva[0].B.Num == 42, "numeracion continua: " + (nueva.Count > 0 ? nueva[0].B.Num : -1));
+        Check(Busqueda.Desde("basura") == null && Busqueda.Desde("{\"tipo\":\"Nada\",\"clave\":\"x\"}") == null, "lineas rotas -> null");
+
+        // --- Cadena: trono usurpado -> heredero desposeido ---
+        var c = new TableroBusquedas(new ReglasBusquedas());
+        c.Compara(new M(0).Reino("k1", "Norte", "rey").U("rey", "k1", rey: true, hijos: new[] { "hijo" }).U("hijo", "k1").U("x", "k1").F);
+        c.Compara(new M(10).Reino("k1", "Norte", null).U("hijo", "k1").U("x", "k1").F);
+        ev = c.Compara(new M(20).Reino("k1", "Norte", "x").U("hijo", "k1").U("x", "k1", rey: true).F);
+        Check(De(ev, EstadoBusqueda.Fallida).Count == 1, "usurpado: fallida");
+        var nuevas = De(ev, EstadoBusqueda.Activa);
+        Check(nuevas.Count == 1 && nuevas[0].B.Tipo == TipoBusqueda.Pretendiente && nuevas[0].B.Objetivo == "hijo"
+              && nuevas[0].B.Titulo.Contains("desposeído"), "y abre «El heredero desposeído»");
+
+        // --- Recompensas ---
+        var f = new M(0).Reino("k1", "Norte", "hijo").U("hijo", "k1", rey: true).U("a", "k1").F;
+        var rb = new Busqueda { Tipo = TipoBusqueda.Trono, Estado = EstadoBusqueda.Cumplida, Objetivo = "hijo" };
+        var r = TableroBusquedas.RecompensaDe(rb, f);
+        Check(r != null && r.Id == "hijo" && r.Renombre == 10 && r.Rasgo == "wfx_voz_del_pueblo", "trono cumplido: renombre y rasgo");
+        r = TableroBusquedas.RecompensaDe(new Busqueda { Tipo = TipoBusqueda.Amantes, Estado = EstadoBusqueda.Fallida, Objetivo = "muerto", Otro = "a" }, f);
+        Check(r != null && r.Id == "a" && r.Rasgo == "wfx_corazon_roto", "amante muerto: el vivo, corazon roto");
+        r = TableroBusquedas.RecompensaDe(new Busqueda { Tipo = TipoBusqueda.Amantes, Estado = EstadoBusqueda.Fallida, Objetivo = "hijo", Otro = "a" }, f);
+        Check(r == null, "dejaron de ser pareja (ambos vivos): nada");
+        Check(TableroBusquedas.RecompensaDe(new Busqueda { Tipo = TipoBusqueda.Venganza, Estado = EstadoBusqueda.Cumplida, Objetivo = "x" }, f) == null, "venganza: nadie a quien premiar");
+        foreach (var cat in new[] { "wfx_voz_del_pueblo", "wfx_vengador", "wfx_peregrino", "wfx_corazon_roto" })
+            Check(Array.Exists(Catalogo.Rasgos, x => x.Id == cat), "el rasgo de recompensa existe en el catalogo: " + cat);
+
+        // --- Estado social (formato de PeceraWB/Code/Exporta.cs) ---
+        var e = EstadoSocial.Lee("{\"id\":\"a7\",\"n\":\"Ana\",\"casa\":\"Casa del Roble\",\"rasgos\":\"valiente\",\"amigo\":\"Bo\",\"rival\":\"\",\"sueno\":\"ser reina (40 %)\",\"rumor\":\"se acuesta con Cid\"}");
+        Check(e != null && e.Id == "a7" && e.Casa == "Casa del Roble", "lee una linea de la pecera");
+        string tx = e.Texto();
+        Check(tx.StartsWith("Ana — Casa del Roble · valiente") && tx.Contains("Amigo: Bo") && !tx.Contains("Rival")
+              && tx.Contains("Se dice que Ana se acuesta con Cid"), "texto del HUD: " + tx);
+        Check(EstadoSocial.Lee("{\"n\":\"sin id\"}") == null && new EstadoSocial { Nombre = "X" }.Texto() == "", "sin id / sin datos");
+        Check(EstadoSocial.LeeTodo(new[] { "{\"id\":\"a1\",\"n\":\"A\"}", "rota", "{\"id\":\"a2\",\"n\":\"B\"}" }).Count == 2, "LeeTodo ignora lineas rotas");
+
+        // --- Frases de recuerdos ---
+        var existentes = new HashSet<string> { Frases.Clave("death_lover", 0), Frases.Clave("death_lover", 1) };
+        var plan = Frases.Plan("death_lover", true, k => existentes.Contains(k));
+        Check(plan.Count == 3 && plan[0].Key == "happiness_dialog_death_lover_2", "se anaden tras las del juego, sin pisarlas");
+        var lleno = Frases.Plan("death_lover", true, k => true);
+        Check(lleno.Count == 0, "nunca pasa de 24 por tipo");
+        int tipos = 0; foreach (string ti in Frases.Tipos) { tipos++; Check(Frases.De(ti, true).Count == Frases.De(ti, false).Count, "es/en iguales: " + ti); }
+        Check(tipos >= 30, "tipos de recuerdo: " + tipos);
     }
 }

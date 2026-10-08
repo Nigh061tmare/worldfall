@@ -171,10 +171,21 @@ namespace WorldfallExpansion.Core
             string nucleo = (a == 0 && b == s.Length) ? s : s.Substring(a, b - a);
 
             string t;
-            if (!exactas.TryGetValue(nucleo, out t)) t = PorPlantilla(nucleo, nivel);
+            if (!exactas.TryGetValue(nucleo, out t)) t = Capitalizada(nucleo);
+            if (t == null) t = PorPlantilla(nucleo, nivel);
             if (t == null) return s;
             if (a == 0 && b == s.Length) return t;
             return s.Substring(0, a) + t + s.Substring(b);
+        }
+
+        // Worldfall capitaliza trozos al componer («When I lost my love, ...»): se prueba la frase con la
+        // primera letra en minuscula y se devuelve la traduccion con mayuscula.
+        string Capitalizada(string s)
+        {
+            if (s.Length < 2 || !char.IsUpper(s[0])) return null;
+            string t;
+            if (!exactas.TryGetValue(char.ToLowerInvariant(s[0]) + s.Substring(1), out t) || t.Length == 0) return null;
+            return char.ToUpperInvariant(t[0]) + t.Substring(1);
         }
 
         string PorPlantilla(string s, int nivel)

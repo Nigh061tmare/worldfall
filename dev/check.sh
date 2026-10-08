@@ -5,3 +5,4 @@ set -euo pipefail
 cd "$(dirname "$0")"
 dotnet run --project Core.Tests --nologo
 dotnet build Check --nologo -v q
+dotnet build CheckPecera --nologo -v q

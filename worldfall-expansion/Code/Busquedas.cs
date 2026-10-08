@@ -66,7 +66,44 @@ namespace WorldfallExpansion
 
             FotoMundo f = Foto(wt);
             if (f == null || f.Unidades.Count == 0) return;   // menu o mundo vacio: no se toma como base
-            foreach (EventoBusqueda e in tablero.Compara(f)) Publica(e, wt);
+            var ev = tablero.Compara(f);
+            foreach (EventoBusqueda e in ev) Publica(e, wt);
+            if (ev.Count > 0 || real - tGuarda > 30f) Guarda(real);
+        }
+
+        static float tGuarda;
+        static string rutaActivas = "";
+
+        // busquedas_activas.jsonl: las abiertas sobreviven a cerrar el juego (se enlazan al volver).
+        static void Guarda(float real)
+        {
+            tGuarda = real;
+            if (rutaActivas.Length == 0 || !tablero.TieneBase) return;
+            try
+            {
+                string tmp = rutaActivas + ".tmp";
+                File.WriteAllLines(tmp, tablero.Serializa().ToArray(), new UTF8Encoding(false));
+                if (File.Exists(rutaActivas)) File.Delete(rutaActivas);
+                File.Move(tmp, rutaActivas);
+            }
+            catch (Exception e) { Estado.Fallo("guardar_busquedas", e); }
+        }
+
+        static void Restaura()
+        {
+            try
+            {
+                if (!File.Exists(rutaActivas)) return;
+                var l = new List<Busqueda>();
+                foreach (string linea in File.ReadAllLines(rutaActivas, Encoding.UTF8))
+                {
+                    Busqueda b = Busqueda.Desde(linea);
+                    if (b != null) l.Add(b);
+                }
+                tablero.Restaura(l);
+                if (l.Count > 0) Debug.Log("[WorldfallExp] busquedas: " + l.Count + " guardadas de la sesion anterior");
+            }
+            catch (Exception e) { Estado.Fallo("restaurar_busquedas", e); }
         }
 
         // Busquedas que propone otro modulo (PuentePecera): mismos topes, avisos y registro.
@@ -75,6 +112,23 @@ namespace WorldfallExpansion
             if (!Activo || tablero == null || cand == null || cand.Count == 0) return;
             foreach (EventoBusqueda e in tablero.Ofrece(cand, ultimoWt)) Publica(e, ultimoWt);
         }
+
+        // La unidad viva mas cercana a una posicion (sin contar a «excepto»), dentro de un radio en casillas.
+        public static Actor Cercano(Vector2 p, float radio, Actor excepto)
+        {
+            Actor mejor = null;
+            float mejorD = radio * radio;
+            foreach (Actor a in actoresPrevios.Values)
+            {
+                if (a == null || a == excepto) continue;
+                Vector2 q = a.current_position;
+                float dx = q.x - p.x, dy = q.y - p.y, d = dx * dx + dy * dy;
+                if (d < mejorD) { mejorD = d; mejor = a; }
+            }
+            return mejor;
+        }
+
+        public static string IdDe(Actor a) { return Id(a); }
 
         public static FotoMundo UltimaFoto { get { return tablero != null ? tablero.Ultima : null; } }
 
@@ -86,14 +140,17 @@ namespace WorldfallExpansion
             string seguro = k;
             foreach (char c in Path.GetInvalidFileNameChars()) seguro = seguro.Replace(c, '_');
             string dir = Path.Combine(Path.Combine(Estado.Dir, "mundos"), seguro);
-            try { Directory.CreateDirectory(dir); rutaLog = Path.Combine(dir, "busquedas.jsonl"); }
-            catch (Exception e) { rutaLog = ""; Estado.Fallo("carpeta_mundo", e); }
+            try { Directory.CreateDirectory(dir); rutaLog = Path.Combine(dir, "busquedas.jsonl"); rutaActivas = Path.Combine(dir, "busquedas_activas.jsonl"); }
+            catch (Exception e) { rutaLog = ""; rutaActivas = ""; Estado.Fallo("carpeta_mundo", e); }
+            if (rutaActivas.Length > 0) Restaura();
             Debug.Log("[WorldfallExp] busquedas: mundo '" + k + "' (linea base en la proxima foto)");
         }
 
         static void Publica(EventoBusqueda e, double wt)
         {
             Anota(e.ToJson(wt));
+            if (e.Estado == EstadoBusqueda.Cumplida || e.Estado == EstadoBusqueda.Fallida)
+                Recompensas.Aplica(TableroBusquedas.RecompensaDe(e.B, tablero.Ultima), e.B);
             if (!Estado.Cfg.Bool("busquedas_avisos")) return;
             switch (e.Estado)
             {

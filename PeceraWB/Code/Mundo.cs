@@ -35,6 +35,7 @@ namespace PeceraWB
             new[] { "juicios", "1" },               // juicios simulados (solo relato y afectos del modelo)
             new[] { "informe_tecla", "F9" },
             new[] { "voz_tecla", "F10" },
+            new[] { "exporta_social", "1" },        // estado_social.jsonl para worldfall-expansion (solo carpeta de la pecera)
         };
 
         public static void Init(string dir)
@@ -252,6 +253,7 @@ namespace PeceraWB
             }
             if (wt - tFacc >= 45) { tFacc = wt; Facciones(); }
             Mentorias(wt);
+            TickExporta();
             if (real - tGuarda >= 60f) { tGuarda = real; Guarda(); }
             if (real - tDiag >= 45f) { tDiag = real; Diagnostico(wt); }
         }

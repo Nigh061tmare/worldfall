@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Compila PeceraWB (Code/**) en C# 5 contra los mismos stubs con API verificada. No se instala nada. -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>5</LangVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <Nullable>disable</Nullable>
+    <AssemblyName>PeceraWB.Check</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../PeceraWB/Code/**/*.cs" />
+    <Compile Include="../stubs/*.cs" />
+  </ItemGroup>
+</Project>

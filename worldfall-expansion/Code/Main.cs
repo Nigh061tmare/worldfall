@@ -65,12 +65,16 @@ namespace WorldfallExpansion
             try { Busquedas.Tick(); } catch (Exception e) { Estado.Fallo("Tick", e); }
             try { PuentePecera.Tick(); } catch (Exception e) { Estado.Fallo("TickPecera", e); }
             try { HudBrujula.Tick(); } catch (Exception e) { Estado.Fallo("TickBrujula", e); }
+            try { HudSocial.Tick(); } catch (Exception e) { Estado.Fallo("TickSocial", e); }
+            try { FrasesPNJ.Tick(); } catch (Exception e) { Estado.Fallo("TickFrases", e); }
             try { Traduccion.Tick(); } catch (Exception e) { Estado.Fallo("TickTraduccion", e); }
         }
 
         void OnGUI()
         {
-            if (Estado.Activo) HudBrujula.Dibuja();
+            if (!Estado.Activo) return;
+            HudBrujula.Dibuja();
+            HudSocial.Dibuja();
         }
     }
 }

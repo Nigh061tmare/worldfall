@@ -25,6 +25,15 @@ namespace WorldfallExpansion
             Debug.Log("[WorldfallExp] puente pecera: " + (Directory.Exists(dirPecera) ? "PeceraWB encontrada" : "sin PeceraWB (se ignora)"));
         }
 
+        // Carpeta del mundo actual dentro de la de PeceraWB (mismo nombre que calcula la pecera).
+        public static string CarpetaMundo()
+        {
+            if (dirPecera.Length == 0) dirPecera = Path.Combine(Path.GetDirectoryName(Estado.Dir), "PeceraWB");
+            string seguro = Estado.ClaveMundo();
+            foreach (char c in Path.GetInvalidFileNameChars()) seguro = seguro.Replace(c, '_');
+            return Path.Combine(Path.Combine(dirPecera, "mundos"), seguro);
+        }
+
         public static void Tick()
         {
             if (dirPecera.Length == 0 || !Busquedas.Activo || World.world == null) return;

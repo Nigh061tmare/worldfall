@@ -2308,3 +2308,11 @@ Your capital {0} has fallen to {1}! => ¡Tu capital {0} ha caído ante {1}!
 {0} was taken by {1}. => {0} fue tomada por {1}.
 {0} took {1} from {2}. => {0} tomó {1} de {2}.
 Year {0}, {1} => Año {0}, {1}
+
+# --- Recuerdos compuestos (Dialogue.TellMemory: "frase" Momento, cuando.) — anadido por Worldfall Expansion
+"{0}" {1}, {2} years ago. => "{0}" {1}, hace {2} años.
+"{0}" {1}, last year. => "{0}" {1}, el año pasado.
+"{0}" {1}, this year. => "{0}" {1}, este año.
+{0}, {1} years ago. => {0}, hace {1} años.
+{0}, last year. => {0}, el año pasado.
+{0}, this year. => {0}, este año.

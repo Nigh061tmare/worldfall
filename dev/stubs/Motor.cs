@@ -6,8 +6,23 @@ using System.Reflection;
 namespace UnityEngine
 {
     public class Object { }
-    public class Component : Object { public Transform transform { get { return null; } } }
-    public class Transform : Component { public Vector3 position; }
+    public class Component : Object
+    {
+        public Transform transform { get { return null; } }
+        public GameObject gameObject { get { return null; } }
+        public T GetComponent<T>() { return default(T); }
+    }
+    public class Transform : Component { public Vector3 position; public void SetParent(Transform p, bool worldPositionStays) { } }
+    public class RectTransform : Transform { public Vector2 anchorMin, anchorMax, pivot, anchoredPosition, sizeDelta; }
+    public class GameObject : Object
+    {
+        public GameObject(string name, params Type[] components) { }
+        public Transform transform { get { return null; } }
+        public T GetComponent<T>() { return default(T); }
+        public void SetActive(bool v) { }
+    }
+    public class Font : Object { }
+    public enum HorizontalWrapMode { Wrap, Overflow }
     public class Behaviour : Component { }
     public class MonoBehaviour : Behaviour { }
     public class Camera : Behaviour { public static Camera main { get { return null; } } }
@@ -77,6 +92,16 @@ namespace UnityEngine
     public static class Application { public static string persistentDataPath { get { return ""; } } }
 }
 
+namespace UnityEngine.UI
+{
+    public class Graphic : UnityEngine.Behaviour { public UnityEngine.Color color; public bool raycastTarget; }
+    public class Text : Graphic
+    {
+        public string text; public UnityEngine.Font font; public int fontSize; public UnityEngine.TextAnchor alignment;
+        public bool supportRichText; public UnityEngine.HorizontalWrapMode horizontalOverflow;
+    }
+}
+
 namespace NeoModLoader.api
 {
     public class ModDeclare { public string FolderPath { get; private set; } }
@@ -99,6 +124,13 @@ namespace HarmonyLib
         public Harmony(string id) { }
         public void PatchAll(Type t) { }
         public MethodInfo Patch(MethodBase original, HarmonyMethod prefix = null, HarmonyMethod postfix = null) { return null; }
+    }
+
+    public static class AccessTools
+    {
+        // En Harmony real devuelve «ref F»; aqui sin ref para poder compilar los stubs en C# 5.
+        public delegate F FieldRef<in T, F>(T instance);
+        public static FieldRef<T, F> FieldRefAccess<T, F>(string fieldName) { return null; }
     }
 
     public class Traverse

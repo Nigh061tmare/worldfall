@@ -23,6 +23,11 @@ namespace WorldfallExpansion.Core
             new[] { "busquedas_amantes", "1" },         // una pareja queda en reinos distintos
             new[] { "busquedas_tecla", "F8" },          // lista las busquedas activas (F9/F10 son de PeceraWB)
             new[] { "contenido", "1" },                 // Arsenal (16 objetos) y 12 rasgos nuevos en el juego (Worldfall los usa)
+            new[] { "busquedas_recompensas", "0" },     // ESCRIBE en el mundo: renombre y rasgos al cumplir busquedas
+            new[] { "busquedas_recompensas_max_hora", "6" },
+            new[] { "social", "1" },                    // en primera persona: lo que la pecera sabe de quien tienes cerca
+            new[] { "social_radio", "6" },              // casillas
+            new[] { "frases", "1" },                    // frases nuevas de recuerdos para los PNJ de Worldfall
             new[] { "pecera_busquedas", "1" },          // regicidios, destierros y disputas de PeceraWB abren busquedas
             new[] { "brujula", "1" },                   // linea arriba con distancia y rumbo a la busqueda que sigues
             new[] { "brujula_tecla", "F7" },            // cambia de busqueda seguida
