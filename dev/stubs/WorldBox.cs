@@ -5,9 +5,11 @@
 using System.Collections.Generic;
 
 // Verificado en Assembly-CSharp (build 719): BaseSimObject.current_position (Vector2), current_tile.
-public class WorldTile { }
+public class WorldTile { public readonly int x; public readonly int y; }
 
-public class BaseSimObject
+public class NanoObject { public void setName(string pName, bool pTrack = true) { } }
+
+public class BaseSimObject : NanoObject
 {
     public WorldTile current_tile;
     public UnityEngine.Vector2 current_position;
@@ -50,7 +52,11 @@ public class Kingdom
     public Actor king;
 }
 
-public class ActorManager { public List<Actor> getSimpleList() { return new List<Actor>(); } }
+public class ActorManager
+{
+    public List<Actor> getSimpleList() { return new List<Actor>(); }
+    public Actor spawnNewUnit(string pActorAssetID, WorldTile pTile, bool pSpawnSound = false, bool pMiracleSpawn = false, float pSpawnHeight = 6f, object pSubspecies = null, bool pGiveOwnerlessItems = false, bool pAdultAge = false) { return null; }
+}
 
 // Verificado en Assembly-CSharp (build 719): World es estatica y World.world es un MapBox.
 // MapBox.map_stats es INTERNAL: solo se lee por reflexion (Traverse), por eso no esta aqui.
@@ -76,3 +82,20 @@ public static class DiplomacyManager
 public class NameInput : UnityEngine.MonoBehaviour { }
 public class UnitWindow : UnityEngine.MonoBehaviour { public NameInput name_input; }
 public static class SelectedUnit { public static Actor unit { get { return null; } } }
+
+// Poderes de dios (PowerLibrary, GodPower, PowerActionWithID) y UI de la barra de poderes. Build 719.
+public enum PowerRank { Rank0_free, Rank1_common, Rank2_normal, Rank3_good, Rank4_awesome }
+public delegate bool PowerActionWithID(WorldTile pTile, string pPowerID);
+public class GodPower : Asset
+{
+    public string name = "DEFAULT NAME";
+    public string path_icon;
+    public PowerRank rank;
+    public bool unselect_when_window;
+    public PowerActionWithID click_action;
+}
+public class PowerLibrary : AssetLibrary<GodPower> { }
+public class PowersTab : UnityEngine.MonoBehaviour { }
+public class PowerButton : UnityEngine.MonoBehaviour { }
+public class CanvasMain : UnityEngine.MonoBehaviour { public static CanvasMain instance; }
+public static class SpriteTextureLoader { public static UnityEngine.Sprite getSprite(string pPath) { return null; } }

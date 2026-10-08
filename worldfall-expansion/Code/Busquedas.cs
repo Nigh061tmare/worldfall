@@ -130,13 +130,16 @@ namespace WorldfallExpansion
 
         public static string IdDe(Actor a) { return Id(a); }
 
+        // Carpeta de este mundo en WorldfallExpansion\mundos\ ("" si aun no hay mundo).
+        public static string CarpetaMundo { get { return rutaLog.Length > 0 ? Path.GetDirectoryName(rutaLog) : ""; } }
+
         public static FotoMundo UltimaFoto { get { return tablero != null ? tablero.Ultima : null; } }
 
         static void Reinicia(string k)
         {
             clave = k;
             tablero.Reinicia();
-            clavesReino.Clear(); clavesCiudad.Clear(); actoresPrevios.Clear();
+            clavesReino.Clear(); clavesCiudad.Clear(); actoresPrevios.Clear(); seguidos.Clear();
             string seguro = k;
             foreach (char c in Path.GetInvalidFileNameChars()) seguro = seguro.Replace(c, '_');
             string dir = Path.Combine(Path.Combine(Estado.Dir, "mundos"), seguro);
@@ -212,10 +215,19 @@ namespace WorldfallExpansion
 
             var f = new FotoMundo { Tiempo = wt };
             var actores = new Dictionary<string, Actor>();
-            foreach (Actor a in lista) Agrega(f, actores, a);
+            foreach (Actor a in lista) Agrega(f, actores, a, false);
+            // Unidades seguidas aunque no sean «sapientes» (bestias legendarias): entran en la foto.
+            var muertas = new List<string>();
+            foreach (var kv in seguidos)
+            {
+                bool viva;
+                try { viva = kv.Value != null && kv.Value.isAlive(); } catch (Exception) { viva = false; }
+                if (viva) Agrega(f, actores, kv.Value, true); else muertas.Add(kv.Key);
+            }
+            foreach (string m in muertas) seguidos.Remove(m);
             // Una unidad puede faltar de la lista sin haber muerto: solo cuenta como muerta si isAlive() lo dice.
             foreach (var kv in actoresPrevios)
-                if (!f.Unidades.ContainsKey(kv.Key)) Agrega(f, actores, kv.Value);
+                if (!f.Unidades.ContainsKey(kv.Key)) Agrega(f, actores, kv.Value, false);
 
             // Hijos solo de reyes y lideres de ciudad (getChildren recorre la familia: no se llama para todos).
             var notables = new HashSet<string>();
@@ -230,11 +242,19 @@ namespace WorldfallExpansion
             return f;
         }
 
-        static void Agrega(FotoMundo f, Dictionary<string, Actor> actores, Actor a)
+        static readonly Dictionary<string, Actor> seguidos = new Dictionary<string, Actor>();
+
+        // Hace que una unidad cualquiera (p. ej. una bestia) aparezca en las fotos mientras viva.
+        public static void Sigue(Actor a)
+        {
+            if (a != null && seguidos.Count < 200) seguidos[Id(a)] = a;
+        }
+
+        static void Agrega(FotoMundo f, Dictionary<string, Actor> actores, Actor a, bool forzar)
         {
             try
             {
-                if (a == null || !a.isAlive() || !a.isSapient()) return;
+                if (a == null || !a.isAlive() || (!forzar && !a.isSapient())) return;
                 var u = new FotoUnidad { Id = Id(a), Nombre = a.getName() ?? "", Adulto = a.isAdult(), EsRey = a.isKing() };
                 if (f.Unidades.ContainsKey(u.Id)) return;
 

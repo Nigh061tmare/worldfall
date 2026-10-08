@@ -115,6 +115,23 @@ namespace NeoModLoader.api
     }
 }
 
+namespace NeoModLoader.General
+{
+    public static class PowerButtonCreator
+    {
+        public static PowerButton CreateGodPowerButton(string pGodPowerId, UnityEngine.Sprite pIcon, UnityEngine.Transform pParent = null, UnityEngine.Vector2 pLocalPosition = default(UnityEngine.Vector2)) { return null; }
+        public static void AddButtonToTab(PowerButton button, PowersTab tab, int? siblingIndex = null) { }
+    }
+}
+
+namespace NeoModLoader.General.UI.Tab
+{
+    public static class TabManager
+    {
+        public static PowersTab CreateTab(string name, string pTitleKey, string pDescKey, UnityEngine.Sprite pIcon, string pOptionDescKey = "hotkey_tip_tab_other") { return null; }
+    }
+}
+
 namespace HarmonyLib
 {
     public class HarmonyMethod { public HarmonyMethod(MethodInfo method) { } }

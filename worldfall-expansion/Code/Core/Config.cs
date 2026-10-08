@@ -28,6 +28,7 @@ namespace WorldfallExpansion.Core
             new[] { "social", "1" },                    // en primera persona: lo que la pecera sabe de quien tienes cerca
             new[] { "social_radio", "6" },              // casillas
             new[] { "frases", "1" },                    // frases nuevas de recuerdos para los PNJ de Worldfall
+            new[] { "poderes", "1" },                   // pestana «Worldfall Expansion» con poderes de dios nuevos y bestias legendarias
             new[] { "pecera_busquedas", "1" },          // regicidios, destierros y disputas de PeceraWB abren busquedas
             new[] { "brujula", "1" },                   // linea arriba con distancia y rumbo a la busqueda que sigues
             new[] { "brujula_tecla", "F7" },            // cambia de busqueda seguida

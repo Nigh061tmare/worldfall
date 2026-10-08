@@ -176,6 +176,14 @@ namespace WorldfallExpansion.Core
                 d[ClaveRasgo(r)] = espanol ? r.NombreEs : r.NombreEn;
                 d[ClaveRasgoDesc(r)] = espanol ? r.DescEs : r.DescEn;
             }
+            // Poderes: la clave es GodPower.name (snake_case: Underscore() la deja igual) y name + "_description".
+            foreach (var p in Poderes.Lista)
+            {
+                d[p.Id] = espanol ? p.NombreEs : p.NombreEn;
+                d[p.Id + "_description"] = espanol ? p.DescEs : p.DescEn;
+            }
+            d[Poderes.Pestana] = "Worldfall Expansion";
+            d[Poderes.Pestana + "_description"] = espanol ? "Poderes de la pecera y bestias legendarias" : "Fishbowl powers and legendary beasts";
             return d;
         }
 

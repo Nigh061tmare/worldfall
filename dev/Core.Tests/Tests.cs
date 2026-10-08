@@ -78,6 +78,7 @@ static class Tests
         FicheroWorldfall();
         CatalogoTest();
         Fase2Test();
+        Fase3Test();
         Console.WriteLine(ok + " comprobaciones OK, " + ko + " fallos");
         return ko == 0 ? 0 : 1;
     }
@@ -532,5 +533,37 @@ static class Tests
         Check(lleno.Count == 0, "nunca pasa de 24 por tipo");
         int tipos = 0; foreach (string ti in Frases.Tipos) { tipos++; Check(Frases.De(ti, true).Count == Frases.De(ti, false).Count, "es/en iguales: " + ti); }
         Check(tipos >= 30, "tipos de recuerdo: " + tipos);
+    }
+    static void Fase3Test()
+    {
+        var vistos = new HashSet<string>();
+        for (int i = -500; i < 500; i++) vistos.Add(Bestias.Elige(i * 7919).Especie);
+        Check(vistos.Count == Bestias.Especies.Length, "todas las especies pueden salir (semillas negativas incluidas)");
+        string n1 = Bestias.Nombre(Bestias.Especies[0], 12345), n2 = Bestias.Nombre(Bestias.Especies[0], 12345);
+        Check(n1 == n2 && n1.StartsWith("El Lobo "), "nombre determinista: " + n1);
+        Check(Bestias.Nombre(Bestias.Especies[4], 99).StartsWith("La Serpiente "), "genero gramatical: " + Bestias.Nombre(Bestias.Especies[4], 99));
+        Check(Bestias.Nombre(Bestias.Especies[1], -77).Length > 10, "semilla negativa no rompe");
+        foreach (string r in Bestias.Rasgos)
+            if (r.StartsWith("wfx_")) Check(Array.Exists(Catalogo.Rasgos, x => x.Id == r), "rasgo de bestia en el catalogo: " + r);
+
+        // Busqueda de caza: abierta desde fuera, se cumple cuando la bestia desaparece de la foto.
+        var t = new TableroBusquedas(new ReglasBusquedas());
+        t.Compara(new M(0).U("b1", null).F);
+        var ev = t.Ofrece(new List<Busqueda> { Bestias.Caza("b1", "El Lobo Gris del Norte", "Norte") }, 1);
+        Check(ev.Count == 1 && ev[0].B.Tipo == TipoBusqueda.Bestia && ev[0].Texto.Contains("Norte"), "caza abierta");
+        Check(t.Compara(new M(10).U("b1", null).F).Count == 0, "sigue viva: activa");
+        ev = t.Compara(new M(20).U("otro", null).F);
+        Check(De(ev, EstadoBusqueda.Cumplida).Count == 1 && ev[0].Texto.StartsWith("¡Han abatido a El Lobo"), "abatida -> cumplida");
+
+        // Poderes: ids unicos con prefijo, textos en los dos idiomas y en Locales.
+        var ids = new HashSet<string>();
+        foreach (var p in Poderes.Lista)
+        {
+            Check(p.Id.StartsWith("wfx_") && ids.Add(p.Id) && p.Id == p.Id.ToLowerInvariant(), "id de poder valido (snake_case): " + p.Id);
+            Check(p.Icono.StartsWith("ui/Icons/actor_traits/icon") && Catalogo.IconosRasgo.Contains(p.Icono.Substring("ui/Icons/actor_traits/".Length)),
+                  "icono de poder del juego: " + p.Icono);
+        }
+        var es = Catalogo.Textos(true);
+        Check(es.ContainsKey("wfx_bendicion") && es.ContainsKey("wfx_bendicion_description") && es.ContainsKey(Poderes.Pestana), "textos de poderes en Locales");
     }
 }

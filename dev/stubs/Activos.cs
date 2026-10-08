@@ -69,6 +69,7 @@ public static class AssetManager
     public static ItemLibrary items;
     public static ActorTraitLibrary traits;
     public static ResourceLibrary resources;
+    public static PowerLibrary powers;
 }
 
 public class GameLanguageAsset : Asset { }

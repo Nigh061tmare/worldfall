@@ -5,7 +5,7 @@ using System.Text;
 
 namespace WorldfallExpansion.Core
 {
-    public enum TipoBusqueda { Trono, Huerfano, Ciudad, Amantes, Venganza, Destierro, Pretendiente }
+    public enum TipoBusqueda { Trono, Huerfano, Ciudad, Amantes, Venganza, Destierro, Pretendiente, Bestia }
 
     public enum EstadoBusqueda { Activa, Cumplida, Fallida, Caducada }
 
@@ -357,6 +357,9 @@ namespace WorldfallExpansion.Core
                     // La cronica puede llegar antes que la foto donde ya no tiene ciudad: primero hay que verlo sin ella.
                     if (o.Ciudad == null) { b.Visto = true; return EstadoBusqueda.Activa; }
                     if (b.Visto) { final = b.ObjetivoNombre + " encuentra un nuevo hogar en " + f.NombreReino(o.Reino); return EstadoBusqueda.Cumplida; }
+                    return EstadoBusqueda.Activa;
+                case TipoBusqueda.Bestia:
+                    if (o == null) { final = "¡Han abatido a " + b.ObjetivoNombre + "! Se contará en las tabernas"; return EstadoBusqueda.Cumplida; }
                     return EstadoBusqueda.Activa;
                 case TipoBusqueda.Pretendiente:
                     if (o == null) { final = b.ObjetivoNombre + " murio sin conseguir la corona"; return EstadoBusqueda.Fallida; }
