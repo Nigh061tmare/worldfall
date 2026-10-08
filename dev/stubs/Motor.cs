@@ -1,12 +1,64 @@
 // STUBS de Unity, NeoModLoader y Harmony: solo lo que usan los mods de este repo.
+// Unity: API publica estable. NML: leida de NeoModLoader.dll (BasicMod, ModDeclare.FolderPath).
 using System;
+using System.Reflection;
 
 namespace UnityEngine
 {
     public class Object { }
-    public class Component : Object { }
+    public class Component : Object { public Transform transform { get { return null; } } }
+    public class Transform : Component { public Vector3 position; }
     public class Behaviour : Component { }
     public class MonoBehaviour : Behaviour { }
+    public class Camera : Behaviour { public static Camera main { get { return null; } } }
+
+    public struct Vector2 { public float x, y; public Vector2(float x, float y) { this.x = x; this.y = y; } }
+    public struct Vector3 { public float x, y, z; }
+    public struct Rect
+    {
+        public float x, y, width, height;
+        public Rect(float x, float y, float w, float h) { this.x = x; this.y = y; width = w; height = h; }
+    }
+    public struct Color
+    {
+        public float r, g, b, a;
+        public Color(float r, float g, float b) { this.r = r; this.g = g; this.b = b; a = 1f; }
+        public Color(float r, float g, float b, float a) { this.r = r; this.g = g; this.b = b; this.a = a; }
+    }
+
+    public enum TextAnchor { UpperLeft, UpperCenter, UpperRight, MiddleLeft, MiddleCenter, MiddleRight, LowerLeft, LowerCenter, LowerRight }
+    public enum FontStyle { Normal, Bold, Italic, BoldAndItalic }
+
+    public class GUIStyleState { public Color textColor; }
+    public class GUIStyle
+    {
+        public GUIStyle() { }
+        public GUIStyle(GUIStyle other) { }
+        public int fontSize;
+        public TextAnchor alignment;
+        public FontStyle fontStyle;
+        public GUIStyleState normal = new GUIStyleState();
+    }
+    public class GUISkin { public GUIStyle label; }
+    public class GUIContent
+    {
+        public GUIContent() { }
+        public GUIContent(string text) { }
+        public string text { get; set; }
+    }
+    public static class GUI
+    {
+        public static GUISkin skin { get { return null; } }
+        public static void Label(Rect position, string text, GUIStyle style) { }
+        public static bool Button(Rect position, string text, GUIStyle style) { return false; }
+    }
+
+    public static class Screen { public static int width { get { return 0; } } public static int height { get { return 0; } } }
+    public static class Mathf
+    {
+        public static int Max(int a, int b) { return a > b ? a : b; }
+        public static int RoundToInt(float f) { return (int)Math.Round(f); }
+    }
 
     public static class Debug
     {
@@ -26,18 +78,26 @@ namespace UnityEngine
 
 namespace NeoModLoader.api
 {
+    public class ModDeclare { public string FolderPath { get; private set; } }
+
     public abstract class BasicMod<T> : UnityEngine.MonoBehaviour where T : BasicMod<T>
     {
+        public static T Instance { get; private set; }
+        public ModDeclare GetDeclaration() { return null; }
+        public virtual void Init() { }
         protected abstract void OnModLoad();
     }
 }
 
 namespace HarmonyLib
 {
+    public class HarmonyMethod { public HarmonyMethod(MethodInfo method) { } }
+
     public class Harmony
     {
         public Harmony(string id) { }
         public void PatchAll(Type t) { }
+        public MethodInfo Patch(MethodBase original, HarmonyMethod prefix = null, HarmonyMethod postfix = null) { return null; }
     }
 
     public class Traverse

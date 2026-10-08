@@ -22,6 +22,13 @@ namespace WorldfallExpansion.Core
             new[] { "busquedas_ciudades", "1" },        // muere el lider de una ciudad y queda sin gobierno
             new[] { "busquedas_amantes", "1" },         // una pareja queda en reinos distintos
             new[] { "busquedas_tecla", "F8" },          // lista las busquedas activas (F9/F10 son de PeceraWB)
+            new[] { "pecera_busquedas", "1" },          // regicidios, destierros y disputas de PeceraWB abren busquedas
+            new[] { "brujula", "1" },                   // linea arriba con distancia y rumbo a la busqueda que sigues
+            new[] { "brujula_tecla", "F7" },            // cambia de busqueda seguida
+            new[] { "brujula_altura", "0.07" },         // altura de la linea (fraccion de la pantalla, 0 = arriba)
+            new[] { "brujula_invertir", "0" },          // 1 si «izquierda/derecha» salen al reves en primera persona
+            new[] { "traduccion", "1" },                // traduce al espanol los textos de Worldfall (Traducciones/*_es.txt)
+            new[] { "traduccion_registro", "0" },       // apunta en traduccion_faltan.txt lo que salio sin traducir
         };
 
         readonly Dictionary<string, string> d = new Dictionary<string, string>();

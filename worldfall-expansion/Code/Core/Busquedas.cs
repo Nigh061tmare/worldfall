@@ -5,7 +5,7 @@ using System.Text;
 
 namespace WorldfallExpansion.Core
 {
-    public enum TipoBusqueda { Trono, Huerfano, Ciudad, Amantes }
+    public enum TipoBusqueda { Trono, Huerfano, Ciudad, Amantes, Venganza, Destierro, Pretendiente }
 
     public enum EstadoBusqueda { Activa, Cumplida, Fallida, Caducada }
 
@@ -25,6 +25,7 @@ namespace WorldfallExpansion.Core
         public string Titulo = "", Descripcion = "", Final = "";
         public double Inicio, Fin;
         public int Prioridad;
+        public bool Visto;                   // destierro: ya se le vio sin ciudad
     }
 
     public sealed class EventoBusqueda
@@ -86,6 +87,7 @@ namespace WorldfallExpansion.Core
         public TableroBusquedas(ReglasBusquedas reglas) { Reglas = reglas ?? new ReglasBusquedas(); }
 
         public IList<Busqueda> Activas { get { return activas; } }
+        public FotoMundo Ultima { get { return anterior; } }
         public bool TieneBase { get { return anterior != null; } }
 
         public void Reinicia()
@@ -109,6 +111,16 @@ namespace WorldfallExpansion.Core
             Abre(foto, cand, ev);
 
             anterior = foto;
+            return ev;
+        }
+
+        // Busquedas que llegan de fuera (la cronica de PeceraWB): mismos topes que las propias.
+        public List<EventoBusqueda> Ofrece(List<Busqueda> cand, double tiempo)
+        {
+            var ev = new List<EventoBusqueda>();
+            if (anterior == null || cand == null || cand.Count == 0) return ev;
+            var f = new FotoMundo { Tiempo = tiempo };
+            Abre(f, cand, ev);
             return ev;
         }
 
@@ -182,6 +194,19 @@ namespace WorldfallExpansion.Core
                     if (o.Reino != null && o.Reino == p.Reino) { final = b.ObjetivoNombre + " y " + b.OtroNombre + " vuelven a vivir en el mismo reino"; return EstadoBusqueda.Cumplida; }
                     return EstadoBusqueda.Activa;
                 }
+                case TipoBusqueda.Venganza:
+                    if (o == null) { final = b.ObjetivoNombre + ", que mato a " + b.OtroNombre + ", ya no vive: se ha cumplido la venganza"; return EstadoBusqueda.Cumplida; }
+                    return EstadoBusqueda.Activa;
+                case TipoBusqueda.Destierro:
+                    if (o == null) { final = b.ObjetivoNombre + " murio en el destierro"; return EstadoBusqueda.Fallida; }
+                    // La cronica puede llegar antes que la foto donde ya no tiene ciudad: primero hay que verlo sin ella.
+                    if (o.Ciudad == null) { b.Visto = true; return EstadoBusqueda.Activa; }
+                    if (b.Visto) { final = b.ObjetivoNombre + " encuentra un nuevo hogar en " + f.NombreReino(o.Reino); return EstadoBusqueda.Cumplida; }
+                    return EstadoBusqueda.Activa;
+                case TipoBusqueda.Pretendiente:
+                    if (o == null) { final = b.ObjetivoNombre + " murio sin conseguir la corona"; return EstadoBusqueda.Fallida; }
+                    if (o.EsRey) { final = b.ObjetivoNombre + " se ha hecho con una corona: rey de " + f.NombreReino(o.Reino); return EstadoBusqueda.Cumplida; }
+                    return EstadoBusqueda.Activa;
             }
             return EstadoBusqueda.Activa;
         }

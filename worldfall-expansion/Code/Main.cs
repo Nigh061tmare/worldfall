@@ -6,14 +6,14 @@ using UnityEngine;
 namespace WorldfallExpansion
 {
     // Plugin companero de Worldfall.
-    // NO toca Worldfall.dll: lee el mundo (que Worldfall renderiza en 3D) y anade
-    // contenido que funciona en modo dios y en primera persona. Sobrevive a updates.
+    // NO toca Worldfall.dll: lee el mundo (que Worldfall renderiza en 3D) y anade contenido que funciona
+    // en modo dios y en primera persona. Sobrevive a updates: cada feature falla por separado.
     //
-    // ESTE ES EL PUNTO DE PARTIDA. Expandelo con nuevas clases (una por feature):
-    //   - CriaturasNuevas.cs   (razas/animales que se ven en 3D)
-    //   - Poderes3D.cs         (poderes de dios visibles en primera persona)
-    //   - HUD.cs               (UI en primera persona: brujula, marcadores, quests)
-    //   - Eventos.cs           (crónicas flotantes, tesoros, monturas)
+    // Features (v3):
+    //   Busquedas.cs      Cronica -> Busquedas (fotos del mundo, solo lectura)
+    //   PuentePecera.cs   busquedas a partir de la cronica de PeceraWB (lee su fichero)
+    //   HudBrujula.cs     brujula hacia el objetivo (primera persona con PuenteWorldfall.cs)
+    //   Traduccion.cs     Worldfall en espanol (Traducciones/worldfall_es.txt)
     //
     // Antes de escribir codigo, lee docs/ARQUITECTURA.md (API real de la build 719).
     public class Main : BasicMod<Main>
@@ -22,9 +22,9 @@ namespace WorldfallExpansion
         {
             try
             {
-                Init();
+                Arranca();
                 Debug.Log("[WorldfallExp] v" + Estado.Version + " cargado. Worldfall sigue siendo el del Workshop. Datos en " + Estado.Dir
-                          + " (" + Estado.Cfg.Str("busquedas_tecla") + " lista de busquedas)");
+                          + " (" + Estado.Cfg.Str("busquedas_tecla") + " lista de busquedas, " + Estado.Cfg.Str("brujula_tecla") + " cambia la brujula)");
             }
             catch (Exception e)
             {
@@ -32,16 +32,24 @@ namespace WorldfallExpansion
             }
         }
 
-        static void Init()
+        // (Antes se llamaba Init: ocultaba BasicMod.Init(), que NML usa en su carga por fases.)
+        static void Arranca()
         {
             // Config propia (LocalLow\mkarpenko\WorldBox\WorldfallExpansion\config.txt)
             Estado.Inicia();
             if (!Estado.Activo) { Debug.Log("[WorldfallExp] activo=0: inerte"); return; }
-            // Cronica -> Busquedas: solo lectura, sin Harmony (compara fotos del mundo).
-            Busquedas.Inicia();
+            Paso("traduccion", Traduccion.Inicia);
+            Paso("busquedas", Busquedas.Inicia);
+            Paso("pecera", PuentePecera.Inicia);
             // Parchea hooks propios (mismo patron que PeceraWB/Code/Hooks.cs)
             // Parchea(typeof(HookHUD));
-            // Parchea(typeof(HookCriaturas));
+        }
+
+        // Cada feature arranca por separado: si una falla, las demas siguen.
+        static void Paso(string nombre, Action a)
+        {
+            try { a(); }
+            catch (Exception e) { Debug.LogWarning("[WorldfallExp] " + nombre + " no arranca: " + e.Message); }
         }
 
         static void Parchea(Type t)
@@ -52,9 +60,16 @@ namespace WorldfallExpansion
 
         void Update()
         {
-            // Tick del plugin (solo si hay mundo cargado y el mod esta activo)
-            try { Busquedas.Tick(); }
-            catch (Exception e) { Estado.Fallo("Tick", e); }
+            if (!Estado.Activo) return;
+            try { Busquedas.Tick(); } catch (Exception e) { Estado.Fallo("Tick", e); }
+            try { PuentePecera.Tick(); } catch (Exception e) { Estado.Fallo("TickPecera", e); }
+            try { HudBrujula.Tick(); } catch (Exception e) { Estado.Fallo("TickBrujula", e); }
+            try { Traduccion.Tick(); } catch (Exception e) { Estado.Fallo("TickTraduccion", e); }
+        }
+
+        void OnGUI()
+        {
+            if (Estado.Activo) HudBrujula.Dibuja();
         }
     }
 }

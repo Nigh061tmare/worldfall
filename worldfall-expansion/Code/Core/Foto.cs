@@ -55,6 +55,16 @@ namespace WorldfallExpansion.Core
             return clave != null && Ciudades.TryGetValue(clave, out c) ? c : null;
         }
 
+        // Unidad viva con ese nombre, solo si es unica (dos homonimos -> null: mejor nada que la equivocada).
+        public FotoUnidad PorNombre(string nombre)
+        {
+            if (string.IsNullOrEmpty(nombre)) return null;
+            FotoUnidad r = null;
+            foreach (var u in Unidades.Values)
+                if (u.Nombre == nombre) { if (r != null) return null; r = u; }
+            return r;
+        }
+
         public string NombreReino(string clave)
         {
             FotoReino r = Reino(clave);

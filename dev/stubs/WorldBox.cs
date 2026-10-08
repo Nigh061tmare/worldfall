@@ -4,7 +4,14 @@
 // en un mod de la build 719 y anotala en docs/ARQUITECTURA.md.
 using System.Collections.Generic;
 
-public class BaseSimObject { }
+// Verificado en Assembly-CSharp (build 719): BaseSimObject.current_position (Vector2), current_tile.
+public class WorldTile { }
+
+public class BaseSimObject
+{
+    public WorldTile current_tile;
+    public UnityEngine.Vector2 current_position;
+}
 
 public class ActorData { public long id; }
 

@@ -33,6 +33,15 @@ namespace WorldfallExpansion
 
         public static bool Activo { get { return Estado.Activo && Estado.Cfg.Bool("busquedas"); } }
 
+        public static IList<Busqueda> Activas { get { return tablero != null ? tablero.Activas : null; } }
+
+        // Unidad viva de la ultima foto (para la brujula). null si no esta.
+        public static Actor ActorDe(string id)
+        {
+            Actor a;
+            return id != null && actoresPrevios.TryGetValue(id, out a) ? a : null;
+        }
+
         public static void Inicia()
         {
             tablero = new TableroBusquedas(ReglasBusquedas.Desde(Estado.Cfg));
@@ -59,6 +68,15 @@ namespace WorldfallExpansion
             if (f == null || f.Unidades.Count == 0) return;   // menu o mundo vacio: no se toma como base
             foreach (EventoBusqueda e in tablero.Compara(f)) Publica(e, wt);
         }
+
+        // Busquedas que propone otro modulo (PuentePecera): mismos topes, avisos y registro.
+        public static void Externas(List<Busqueda> cand)
+        {
+            if (!Activo || tablero == null || cand == null || cand.Count == 0) return;
+            foreach (EventoBusqueda e in tablero.Ofrece(cand, ultimoWt)) Publica(e, ultimoWt);
+        }
+
+        public static FotoMundo UltimaFoto { get { return tablero != null ? tablero.Ultima : null; } }
 
         static void Reinicia(string k)
         {
