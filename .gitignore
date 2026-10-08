@@ -1,0 +1,22 @@
+# No subir binarios del juego ni datos locales
+*.dll
+*.pdb
+*.zip
+
+# Datos generados por la pecera (mundos, logs, config local)
+pecera/mundos/
+pecera/*.log
+pecera/config.txt
+
+# Copias de seguridad y restos
+*.bak
+*.bak2
+*.bak3
+~$*
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Nota: Worldfall.dll NO se sube (propiedad del autor). Solo se documenta
+# dónde obtenerlo (Workshop / worldfall3d.com / backup local del usuario).
