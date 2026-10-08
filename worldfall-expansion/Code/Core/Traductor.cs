@@ -25,6 +25,7 @@ namespace WorldfallExpansion.Core
             public Regex Re;
             public string Destino = "";
             public int Huecos;
+            public int Literal;        // letras fijas: a mas, mas especifica
         }
 
         readonly Dictionary<string, string> exactas = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -75,17 +76,17 @@ namespace WorldfallExpansion.Core
                 string lit = en.Substring(pos, m.Index - pos);
                 if (pos > 0 && lit.Length == 0) pegados = true;   // "{0}{1}": ambiguo
                 sb.Append(Regex.Escape(lit));
-                clave = Mejor(clave, lit);
+                clave = Mejor(clave, lit, pos > 0, true);
                 int n = m.Groups[1].Value[0] - '0';
                 if (sb.ToString().Contains("(?<h" + n + ">")) sb.Append("\\k<h" + n + ">");
-                else sb.Append("(?<h" + n + ">.+?)");
+                else sb.Append("(?<h" + n + ">.*?)");   // puede ir vacio: Worldfall compone trozos opcionales
                 if (n > maxN) maxN = n;
                 huecos++;
                 pos = m.Index + m.Length;
             }
             string fin = en.Substring(pos);
             sb.Append(Regex.Escape(fin)).Append('$');
-            clave = Mejor(clave, fin);
+            clave = Mejor(clave, fin, pos > 0, false);
             if (clave == null || pegados) return false;
             // Todos los huecos del destino deben existir en el origen.
             foreach (Match m in Hueco.Matches(es))
@@ -96,6 +97,7 @@ namespace WorldfallExpansion.Core
                 Re = new Regex(sb.ToString(), RegexOptions.CultureInvariant | RegexOptions.Singleline),
                 Destino = es,
                 Huecos = maxN + 1,
+                Literal = Hueco.Replace(en, "").Length,
             };
             List<Plantilla> l;
             if (!indice.TryGetValue(clave, out l)) { l = new List<Plantilla>(); indice[clave] = l; }
@@ -107,11 +109,22 @@ namespace WorldfallExpansion.Core
             return true;
         }
 
-        // Palabra de indice: la mas larga (3+ letras) de los trozos fijos.
-        static string Mejor(string actual, string literal)
+        // Palabra de indice: la mas larga (3+ letras) de los trozos fijos que sea una palabra COMPLETA:
+        // una pegada a un hueco ("settler{1}") en el juego sale distinta ("settlers") y no se encontraria.
+        static string Mejor(string actual, string literal, bool huecoAntes, bool huecoDespues)
         {
-            foreach (string w in Palabras(literal))
+            int i = 0;
+            while (i < literal.Length)
+            {
+                while (i < literal.Length && !char.IsLetter(literal[i])) i++;
+                int ini = i;
+                while (i < literal.Length && (char.IsLetter(literal[i]) || literal[i] == '\'')) i++;
+                if (i - ini < 3) continue;
+                if (huecoAntes && ini == 0) continue;
+                if (huecoDespues && i == literal.Length) continue;
+                string w = literal.Substring(ini, i - ini);
                 if (actual == null || w.Length > actual.Length) actual = w;
+            }
             return actual;
         }
 
@@ -167,30 +180,36 @@ namespace WorldfallExpansion.Core
         string PorPlantilla(string s, int nivel)
         {
             if (indice.Count == 0) return null;
+            // Gana la plantilla que encaja con MAS texto fijo: «The {0}» no puede tapar a
+            // «The sky over {0} splits with falling fire!».
             HashSet<string> vistas = null;
+            Plantilla p = null;
+            Match m = null;
             foreach (string w in Palabras(s))
             {
                 if (vistas == null) vistas = new HashSet<string>(StringComparer.Ordinal);
                 if (!vistas.Add(w)) continue;
                 List<Plantilla> l;
                 if (!indice.TryGetValue(w, out l)) continue;
-                foreach (Plantilla p in l)
+                foreach (Plantilla c in l)
                 {
-                    Match m = p.Re.Match(s);
-                    if (!m.Success) continue;
-                    var vals = new string[p.Huecos];
-                    for (int n = 0; n < p.Huecos; n++)
-                    {
-                        Group g = m.Groups["h" + n.ToString(CultureInfo.InvariantCulture)];
-                        string v = g.Success ? g.Value : "";
-                        if (nivel < 1 && v.Length > 0) v = TraduceSinCache(v, nivel + 1);
-                        vals[n] = v;
-                    }
-                    // Sustitucion en una pasada: un valor que contenga "{1}" no se vuelve a sustituir.
-                    return Hueco.Replace(p.Destino, h => vals[h.Groups[1].Value[0] - '0']);
+                    if (p != null && c.Literal <= p.Literal) continue;
+                    if (c.Literal > s.Length) continue;
+                    Match mc = c.Re.Match(s);
+                    if (mc.Success) { p = c; m = mc; }
                 }
             }
-            return null;
+            if (p == null) return null;
+            var vals = new string[p.Huecos];
+            for (int n = 0; n < p.Huecos; n++)
+            {
+                Group g = m.Groups["h" + n.ToString(CultureInfo.InvariantCulture)];
+                string v = g.Success ? g.Value : "";
+                if (nivel < 1 && v.Length > 0) v = TraduceSinCache(v, nivel + 1);
+                vals[n] = v;
+            }
+            // Sustitucion en una pasada: un valor que contenga "{1}" no se vuelve a sustituir.
+            return Hueco.Replace(p.Destino, h => vals[h.Groups[1].Value[0] - '0']);
         }
 
         static bool TieneTexto(string s)

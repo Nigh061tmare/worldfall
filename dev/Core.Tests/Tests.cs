@@ -66,6 +66,7 @@ static class Tests
         Traduccion();
         BrujulaTest();
         PeceraTest();
+        FicheroWorldfall();
         Console.WriteLine(ok + " comprobaciones OK, " + ko + " fallos");
         return ko == 0 ? 0 : 1;
     }
@@ -345,5 +346,53 @@ static class Tests
         ev = t.Compara(new M(10).Reino("k1", "Norte", null).Reino("k2", "Sur", "rv").U("rv", "k2", rey: true).F);
         Check(De(ev, EstadoBusqueda.Cumplida).Count == 2, "venganza (muere el asesino) y pretendiente (se corona) cumplidas");
         Check(new TableroBusquedas(null).Ofrece(new List<Busqueda> { b }, 1).Count == 0, "sin linea base no se abre nada de fuera");
+    }
+    // El fichero REAL de traducciones: carga sin errores y traduce casos del juego.
+    static void FicheroWorldfall()
+    {
+        string dir = System.IO.Directory.GetCurrentDirectory(), f = null;
+        for (int i = 0; i < 6 && dir != null; i++)
+        {
+            string c = System.IO.Path.Combine(dir, "worldfall-expansion", "Traducciones", "worldfall_es.txt");
+            if (System.IO.File.Exists(c)) { f = c; break; }
+            dir = System.IO.Path.GetDirectoryName(dir);
+        }
+        Check(f != null, "encuentro Traducciones/worldfall_es.txt");
+        if (f == null) return;
+        var t = new Traductor();
+        t.Carga(System.IO.File.ReadAllLines(f, System.Text.Encoding.UTF8));
+        Check(t.Errores == 0, "fichero sin lineas rotas (" + t.Errores + ")");
+        Check(t.Exactas > 1400 && t.Plantillas > 550, "volumen: " + t.Exactas + " frases, " + t.Plantillas + " plantillas");
+        Check(t.Traduce("Any work for me?") == "¿Tienes trabajo para mí?", "frase de dialogo");
+        Check(t.Traduce("Settings") == "Ajustes", "menu");
+        Check(t.Traduce("The sky over Oslo splits with falling fire!") == "¡El cielo sobre Oslo se abre en una lluvia de fuego!",
+              "la plantilla mas especifica gana: " + t.Traduce("The sky over Oslo splits with falling fire!"));
+        Check(t.Traduce("Your army is already marching on Oslo (12 warriors).") == "Tu ejército ya marcha sobre Oslo (12 guerreros).", "plantilla con numeros");
+        Check(t.Traduce("Expecting, about 3 months") == "Esperando un bebé, faltan unos 3 meses", "plantilla de embarazo");
+        string r = t.Traduce("There's good land North-east of Oslo. Go there, raise a village for Norte, and lead it. Take care.\nYour map (M) shows the way; any free land will do if you find better.");
+        Check(r.StartsWith("Hay buena tierra al noreste de Oslo."), "hueco traducido dentro de plantilla: " + r);
+
+        // Cada plantilla, rellenada con valores inventados, debe traducirse con ELLA misma (ninguna otra la tapa).
+        int mal = 0, total = 0;
+        var hueco = new System.Text.RegularExpressions.Regex(@"\{(\d)\}");
+        foreach (string linea in System.IO.File.ReadAllLines(f, System.Text.Encoding.UTF8))
+        {
+            if (linea.StartsWith("#") || linea.IndexOf(" => ", StringComparison.Ordinal) < 0) continue;
+            int k = linea.IndexOf(" => ", StringComparison.Ordinal);
+            string en = Traductor.Desescapa(linea.Substring(0, k)).Trim(), es = Traductor.Desescapa(linea.Substring(k + 4)).Trim();
+            if (!hueco.IsMatch(en)) continue;
+            total++;
+            System.Text.RegularExpressions.MatchEvaluator val = mm => "Qz" + mm.Groups[1].Value + "x";
+            string entrada = hueco.Replace(en, val), esperado = hueco.Replace(es, val);
+            string sale = t.Traduce(entrada);
+            if (sale != esperado) { mal++; if (mal <= 8) Console.WriteLine("  choque: «" + entrada + "» -> «" + sale + "» (esperado «" + esperado + "»)"); }
+        }
+        Check(mal == 0, "plantillas sin choques: " + (total - mal) + "/" + total);
+
+        // Rendimiento: 5.000 textos distintos (como numeros cambiantes en el HUD) en poco tiempo.
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        for (int i = 0; i < 5000; i++) t.Traduce("Your army is already marching on City" + i + " (" + i + " warriors).");
+        sw.Stop();
+        Check(sw.ElapsedMilliseconds < 2000, "5000 traducciones nuevas en " + sw.ElapsedMilliseconds + " ms");
     }
 }
